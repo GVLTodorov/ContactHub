@@ -46,13 +46,11 @@ ng test
 
 ## Running end-to-end tests
 
-For end-to-end (e2e) testing, run:
+The end-to-end test lives in `../e2e`. Run it from the repo root:
 
 ```bash
-ng e2e
+dotnet run --project e2e/ContactHub.E2E
 ```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
 
 ## Additional Resources
 

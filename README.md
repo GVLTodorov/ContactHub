@@ -23,8 +23,8 @@ needed for Compose.
 | Whole stack | `docker compose up --build` | Backend on port 8080, frontend dev server on port 4700 |
 | Backend tests | `cd backend && dotnet test` | NUnit: domain unit tests and endpoint tests through `WebApplicationFactory` |
 | Frontend tests | `cd frontend && npm test -- --watch=false` | Vitest: reducer, selectors, effects, API service, validators, components |
-| E2E test | `cd frontend && npm run e2e` | Playwright (Chromium) starts the backend and the dev server itself (first time: `npx playwright install chromium`) |
-| Lint | `cd backend && dotnet format --verify-no-changes` · `cd frontend && npm run lint` | |
+| E2E test | `dotnet run --project e2e/ContactHub.E2E` (from the repo root) | .NET console app using Microsoft.Playwright (Chromium); starts the backend and the dev server itself, exits non-zero on failure (first time: `dotnet run --project e2e/ContactHub.E2E -- install chromium`) |
+| Lint | `cd backend && dotnet format --verify-no-changes` · `cd e2e && dotnet format --verify-no-changes` · `cd frontend && npm run lint` | |
 
 **Where the data lives.** The connection string is `Data Source=database/contacthub.db`. A
 relative path is resolved against the running app's folder (`AppContext.BaseDirectory`), not the
@@ -133,7 +133,7 @@ flowchart LR
 | Rich Domain Model | `backend/src/Api/Domain/Contact.cs`, `backend/src/Api/Domain/Address.cs`, `backend/src/Api/Domain/PhoneNumber.cs`, `backend/src/Api/Domain/Iban.cs`, `backend/src/Api/Domain/DomainValidationException.cs` |
 | ngrx Store | `frontend/src/app/store/contacts/`, `frontend/src/app/app.config.ts`, `frontend/src/app/api/contacts-api.ts` |
 | PrimeNG components | `frontend/src/app/app.config.ts` (`providePrimeNG`, Aura), `frontend/src/app/pages/contacts/contacts.html` (Table, ConfirmDialog), `frontend/src/app/components/contact-form/contact-form.html` (InputText, DatePicker, Fieldset), `frontend/src/app/components/layout/layout.html` |
-| Playwright e2e test | `frontend/playwright.config.ts`, `frontend/e2e/create-contact.spec.ts`, `e2e` job in `.github/workflows/ci.yml` |
+| Playwright e2e test | `e2e/ContactHub.E2E/` (.NET console app, `Program.Main`), `e2e` job in `.github/workflows/ci.yml` |
 | Tests | `backend/tests/Api.Tests/DomainTests.cs`, `backend/tests/Api.Tests/ContactsEndpointTests.cs`, `*.spec.ts` next to the frontend code |
 
 ## Contact list features
