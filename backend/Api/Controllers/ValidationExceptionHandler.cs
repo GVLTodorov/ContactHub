@@ -26,7 +26,7 @@ public class ValidationExceptionHandler(IProblemDetailsService problemDetails) :
         }
 
         httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-        return await problemDetails.TryWriteAsync(new ProblemDetailsContext
+        var written = await problemDetails.TryWriteAsync(new ProblemDetailsContext
         {
             HttpContext = httpContext,
             Exception = exception,
@@ -36,5 +36,7 @@ public class ValidationExceptionHandler(IProblemDetailsService problemDetails) :
                 Title = "One or more validation errors occurred.",
             },
         });
+
+        return written;
     }
 }

@@ -26,7 +26,9 @@ internal static class Program
 
             DeleteE2EDatabase(root);
 
-            if (!(reuse && await IsUp(BackendUrl)))
+            var backendUp = await IsUp(BackendUrl);
+
+            if (!(reuse && backendUp))
             {
                 var backend = StartProcess(
                     "dotnet",
@@ -37,7 +39,9 @@ internal static class Program
                 await WaitFor(BackendUrl, TimeSpan.FromMinutes(5), backend);
             }
 
-            if (!(reuse && await IsUp(FrontendUrl)))
+            var frontendUp = await IsUp(FrontendUrl);
+
+            if (!(reuse && frontendUp))
             {
                 var frontend = OperatingSystem.IsWindows()
                     ? StartProcess("cmd", ["/c", "npm", "run", "start", "--", "--port", FrontendPort], Path.Combine(root, "frontend"))
@@ -46,7 +50,9 @@ internal static class Program
                 await WaitFor(FrontendUrl, TimeSpan.FromMinutes(2), frontend);
             }
 
-            return await RunScenario(artifacts);
+            var exitCode = await RunScenario(artifacts);
+
+            return exitCode;
         }
         catch (Exception ex)
         {
@@ -210,7 +216,9 @@ internal static class Program
                 throw new InvalidOperationException($"Process for {url} exited early with code {process.ExitCode}");
             }
 
-            if (await IsUp(url))
+            var up = await IsUp(url);
+
+            if (up)
             {
                 return;
             }

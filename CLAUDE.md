@@ -45,6 +45,19 @@
 - Image: final stage creates `/app/database` owned by `app`
 - CI: no database service
 
+## Code style
+
+- Awaits (C# and TypeScript, app and test code): put every awaited result in a named variable,
+  then a blank line, then use it. Never `return await …`, `=> await …`, or an `await` inside
+  another expression (argument, condition, `&&`/`||`, `??`). A bare `await x;` statement with no
+  result is fine.
+
+  ```csharp
+  var contacts = await handler.HandleAsync(new ListContactsQuery(), cancellationToken);
+
+  return contacts;
+  ```
+
 ## Rules
 
 - Edit only your area. Need another? Say so in your report.

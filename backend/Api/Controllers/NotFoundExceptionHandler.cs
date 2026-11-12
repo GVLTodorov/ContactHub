@@ -15,7 +15,7 @@ public class NotFoundExceptionHandler(IProblemDetailsService problemDetails) : I
         }
 
         httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-        return await problemDetails.TryWriteAsync(new ProblemDetailsContext
+        var written = await problemDetails.TryWriteAsync(new ProblemDetailsContext
         {
             HttpContext = httpContext,
             Exception = exception,
@@ -26,5 +26,7 @@ public class NotFoundExceptionHandler(IProblemDetailsService problemDetails) : I
                 Detail = exception.Message,
             },
         });
+
+        return written;
     }
 }

@@ -23,6 +23,8 @@ public class ValidationCommandHandlerDecorator<TCommand, TResult>(
             throw new ValidationException(failures);
         }
 
-        return await inner.HandleAsync(command, cancellationToken);
+        var handled = await inner.HandleAsync(command, cancellationToken);
+
+        return handled;
     }
 }

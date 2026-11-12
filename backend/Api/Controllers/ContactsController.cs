@@ -17,6 +17,7 @@ public class ContactsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var contact = await handler.HandleAsync(command, cancellationToken);
+
         return Created($"/api/contacts/{contact.Id}", contact);
     }
 
@@ -26,8 +27,12 @@ public class ContactsController : ControllerBase
     public async Task<ContactDto> GetById(
         Guid id,
         [FromServices] IQueryHandler<GetContactByIdQuery, ContactDto> handler,
-        CancellationToken cancellationToken) =>
-        await handler.HandleAsync(new GetContactByIdQuery(id), cancellationToken);
+        CancellationToken cancellationToken)
+    {
+        var contact = await handler.HandleAsync(new GetContactByIdQuery(id), cancellationToken);
+
+        return contact;
+    }
 
     [HttpPut("{id:guid}")]
     [ProducesResponseType<ContactDto>(StatusCodes.Status200OK)]
@@ -37,10 +42,13 @@ public class ContactsController : ControllerBase
         Guid id,
         CreateContactCommand body,
         [FromServices] ICommandHandler<UpdateContactCommand, ContactDto> handler,
-        CancellationToken cancellationToken) =>
-        await handler.HandleAsync(
-            new UpdateContactCommand(id, body.FirstName, body.Surname, body.DateOfBirth, body.Address, body.PhoneNumber, body.Iban),
-            cancellationToken);
+        CancellationToken cancellationToken)
+    {
+        var command = new UpdateContactCommand(id, body.FirstName, body.Surname, body.DateOfBirth, body.Address, body.PhoneNumber, body.Iban);
+        var contact = await handler.HandleAsync(command, cancellationToken);
+
+        return contact;
+    }
 
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -58,6 +66,10 @@ public class ContactsController : ControllerBase
     [ProducesResponseType<IReadOnlyList<ContactDto>>(StatusCodes.Status200OK)]
     public async Task<IReadOnlyList<ContactDto>> List(
         [FromServices] IQueryHandler<ListContactsQuery, IReadOnlyList<ContactDto>> handler,
-        CancellationToken cancellationToken) =>
-        await handler.HandleAsync(new ListContactsQuery(), cancellationToken);
+        CancellationToken cancellationToken)
+    {
+        var contacts = await handler.HandleAsync(new ListContactsQuery(), cancellationToken);
+
+        return contacts;
+    }
 }
