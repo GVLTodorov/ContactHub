@@ -20,7 +20,7 @@ passes.
 | Backend | ![Backend line coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/backend/line.svg) | ![Backend branch coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/backend/branch.svg) |
 | Frontend | ![Frontend line coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/frontend/line.svg) | ![Frontend branch coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/frontend/branch.svg) |
 
-![Demo: Swagger UI opens, its Client button opens the app, then a contact is created, opened, edited and deleted.](https://github.com/GVLTodorov/ContactHub/raw/badges/demo/demo.gif)
+![Demo: Swagger UI's Client button opens the app, then the seeded list is searched, a contact's phone and address are copied, a new contact is created (an invalid IBAN is fixed), edited and deleted.](https://github.com/GVLTodorov/ContactHub/raw/badges/demo/demo.gif)
 
 CI regenerates the coverage badges and re-records the demo on every push to `main` and stores them
 on the `badges` branch. Backend numbers combine unit and integration tests.
@@ -51,7 +51,7 @@ needed for Compose.
 | Backend tests | `cd backend && dotnet test` | NUnit. `Api.Tests`: unit tests, fails below 95% line or branch coverage (coverlet). `Api.Integration.Tests`: the API in memory through `WebApplicationFactory` |
 | Frontend tests | `cd frontend && npm test -- --watch=false` | Vitest: reducer, selectors, effects, API service, validators, components. `npm run test:coverage` also writes `coverage/frontend/cobertura-coverage.xml` |
 | E2E test | `dotnet run --project e2e/ContactHub.E2E` (from the repo root) | .NET console app using Microsoft.Playwright (Chromium); starts the backend and the dev server itself, exits non-zero on failure (first time: `dotnet run --project e2e/ContactHub.E2E -- install chromium`) |
-| Demo video | `dotnet run --project e2e/ContactHub.E2E -- demo` | Records Swagger, Client button, create, edit and delete to `e2e/artifacts/demo/demo.webm` (backend seeded with demo contacts) |
+| Demo video | `dotnet run --project e2e/ContactHub.Demo` (from the repo root) | Separate Playwright recorder, no assertions: starts the stack with demo contacts and records Swagger's Client button, search, copy, create, edit and delete to `e2e/artifacts/demo/demo.webm` (about 70 s; paced with 1 s steps, visible typing and a click marker) |
 | Lint | `cd backend && dotnet format --verify-no-changes` · `cd e2e && dotnet format --verify-no-changes` · `cd frontend && npm run lint` | |
 
 **Where the data lives.** The connection string is `Data Source=database/contacthub.db`. A
@@ -69,7 +69,7 @@ build) and e2e jobs. On `main`, once those pass, it then:
 
 - pushes the single image (API plus the built Angular app) to GHCR as `:<version>` and `:latest`;
 - triggers a Render deploy through the `RENDER_DEPLOY_HOOK_URL` secret (skipped with a notice if unset);
-- builds the coverage badges (ReportGenerator) and the demo GIF (e2e demo mode, ffmpeg), and
+- builds the coverage badges (ReportGenerator) and the demo GIF (`e2e/ContactHub.Demo`, ffmpeg), and
   pushes them to the orphan `badges` branch from a single job.
 
 Backend coverage combines `Api.Tests` (coverlet.msbuild) and `Api.Integration.Tests`
