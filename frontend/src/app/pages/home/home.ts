@@ -8,6 +8,6 @@ import { ButtonModule } from 'primeng/button';
   templateUrl: './home.html',
 })
 export class Home {
-  /** Set to true once the /contacts route exists (Task 3). */
-  protected readonly contactsEnabled = false;
+  /** The /contacts route exists since Task 3. */
+  protected readonly contactsEnabled = true;
 }

@@ -131,7 +131,7 @@
 
 ### Task 3 — Create and list contacts
 
-- [ ] Done
+- [x] Done
 - Goal: the user adds a contact through a validated form and sees all contacts in a table; data
   survives a restart.
 - Builds on: 2

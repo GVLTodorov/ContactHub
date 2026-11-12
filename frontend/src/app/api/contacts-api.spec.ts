@@ -1,0 +1,42 @@
+import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ContactInput, ContactsApi } from './contacts-api';
+
+describe('ContactsApi', () => {
+  let api: ContactsApi;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    api = TestBed.inject(ContactsApi);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  it('lists contacts', () => {
+    let result: unknown;
+    api.list().subscribe((r) => (result = r));
+    const req = http.expectOne('/api/contacts');
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
+    expect(result).toEqual([]);
+  });
+
+  it('creates a contact', () => {
+    const input: ContactInput = {
+      firstName: 'A',
+      surname: 'B',
+      dateOfBirth: '1990-01-01',
+      address: { street: 's', postalCode: 'p', city: 'c', country: 'x' },
+      phoneNumber: '+4912345678',
+      iban: 'DE89370400440532013000',
+    };
+    api.create(input).subscribe();
+    const req = http.expectOne('/api/contacts');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(input);
+    req.flush({ id: '1', ...input });
+  });
+});

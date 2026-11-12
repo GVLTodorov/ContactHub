@@ -1,3 +1,5 @@
+using Api.Application;
+using Api.Controllers;
 using Api.Data;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -11,8 +13,11 @@ public class Startup(IConfiguration configuration)
 
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddControllers();
+        services.AddControllers(o => o.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true);
         services.AddProblemDetails();
+        services.AddExceptionHandler<ValidationExceptionHandler>();
+        services.AddSingleton(TimeProvider.System);
+        services.AddApplication();
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(o => o.SwaggerDoc("v1", new OpenApiInfo { Title = "ContactHub API", Version = "v1" }));
 

@@ -14,15 +14,6 @@ public class HealthEndpointTests
     [OneTimeSetUp]
     public void OneTimeSetUp()
     {
-        var dbFile = Path.Combine(AppContext.BaseDirectory, "database", "contacthub_test.db");
-        foreach (var suffix in new[] { "", "-wal", "-shm" })
-        {
-            if (File.Exists(dbFile + suffix))
-            {
-                File.Delete(dbFile + suffix);
-            }
-        }
-
         _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b => b.UseEnvironment("Testing"));
         _client = _factory.CreateClient();
     }
