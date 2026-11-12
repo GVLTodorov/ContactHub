@@ -1,23 +1,29 @@
 # ContactHub
 
-## Live demo
+A single-user contact manager: an ASP.NET Core (.NET 10) Web API with SQLite and an Angular UI. It
+is hosted on [Render](https://render.com) (free tier, Frankfurt) and redeploys from `main` after CI
+passes.
 
-| | URL |
+| What | URL |
 | --- | --- |
-| App | https://contacthub.onrender.com |
-| Swagger | https://contacthub.onrender.com/swagger |
-| Health | https://contacthub.onrender.com/api/health |
-| Source | https://github.com/GVLTodorov/ContactHub |
+| App (list, search, create, edit, delete contacts) | <https://contacthub-h4or.onrender.com> |
+| Swagger UI (API docs, try it out) | <https://contacthub-h4or.onrender.com/swagger> |
+| Health check | <https://contacthub-h4or.onrender.com/api/health> |
+| Source | <https://github.com/GVLTodorov/ContactHub> |
 
-The free Render service sleeps after 15 minutes without traffic, so the first request can take about
-a minute. Data resets to the demo contacts on every restart (SQLite on an ephemeral disk).
+> The free tier sleeps after about 15 minutes without traffic, so the first visit can take up to a
+> minute to load. Data resets to five demo contacts on every restart or deploy (SQLite on an
+> ephemeral disk).
 
-| Coverage | Line | Branch |
+| Project | Line coverage | Branch coverage |
 | --- | --- | --- |
-| Backend | ![backend line](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/backend/line.svg) | ![backend branch](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/backend/branch.svg) |
-| Frontend | ![frontend line](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/frontend/line.svg) | ![frontend branch](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/frontend/branch.svg) |
+| Backend | ![Backend line coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/backend/line.svg) | ![Backend branch coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/backend/branch.svg) |
+| Frontend | ![Frontend line coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/frontend/line.svg) | ![Frontend branch coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/frontend/branch.svg) |
 
-![Demo](https://github.com/GVLTodorov/ContactHub/raw/badges/demo/demo.gif)
+![Demo: Swagger UI opens, its Client button opens the app, then a contact is created, opened, edited and deleted.](https://github.com/GVLTodorov/ContactHub/raw/badges/demo/demo.gif)
+
+CI regenerates the coverage badges and re-records the demo on every push to `main` and stores them
+on the `badges` branch. Backend numbers combine unit and integration tests.
 
 ---
 
@@ -39,12 +45,13 @@ needed for Compose.
 
 | What | Command | Result |
 | --- | --- | --- |
-| Backend | `cd backend && dotnet run --project Api` | API on http://127.0.0.1:8080, Swagger UI at http://127.0.0.1:8080/swagger |
+| Backend | `cd backend && dotnet run --project Api` | API on http://127.0.0.1:8080, Swagger UI at http://127.0.0.1:8080/swagger (its green **Client** button opens the app) |
 | Frontend | `cd frontend && npm install && npm run start` | App on http://127.0.0.1:4700; `/api` is proxied to the backend (`frontend/proxy.conf.js`) |
 | Whole stack | `docker compose up --build` | Backend on port 8080, frontend dev server on port 4700 |
-| Backend tests | `cd backend && dotnet test` | NUnit: domain unit tests and endpoint tests through `WebApplicationFactory` |
-| Frontend tests | `cd frontend && npm test -- --watch=false` | Vitest: reducer, selectors, effects, API service, validators, components |
+| Backend tests | `cd backend && dotnet test` | NUnit. `Api.Tests`: unit tests, fails below 95% line or branch coverage (coverlet). `Api.Integration.Tests`: the API in memory through `WebApplicationFactory` |
+| Frontend tests | `cd frontend && npm test -- --watch=false` | Vitest: reducer, selectors, effects, API service, validators, components. `npm run test:coverage` also writes `coverage/frontend/cobertura-coverage.xml` |
 | E2E test | `dotnet run --project e2e/ContactHub.E2E` (from the repo root) | .NET console app using Microsoft.Playwright (Chromium); starts the backend and the dev server itself, exits non-zero on failure (first time: `dotnet run --project e2e/ContactHub.E2E -- install chromium`) |
+| Demo video | `dotnet run --project e2e/ContactHub.E2E -- demo` | Records Swagger, Client button, create, edit and delete to `e2e/artifacts/demo/demo.webm` (backend seeded with demo contacts) |
 | Lint | `cd backend && dotnet format --verify-no-changes` · `cd e2e && dotnet format --verify-no-changes` · `cd frontend && npm run lint` | |
 
 **Where the data lives.** The connection string is `Data Source=database/contacthub.db`. A
@@ -71,9 +78,10 @@ Backend coverage combines `Api.Tests` (coverlet.msbuild) and `Api.Integration.Te
 
 ## Hosted on Render
 
-`render.yaml` describes a free Docker web service `contacthub` (Frankfurt) built from the root
-`Dockerfile` (final stage `app`: API, Swagger and the SPA on port 8080). It sets
-`SeedDemoData=true`, `healthCheckPath: /api/health` and `autoDeploy: false`.
+The app is live at <https://contacthub-h4or.onrender.com>. `render.yaml` describes the free Docker
+web service `contacthub` (Frankfurt) built from the root `Dockerfile` (final stage `app`: API,
+Swagger and the SPA on port 8080). It sets `SeedDemoData=true`, `healthCheckPath: /api/health` and
+`autoDeploy: false`, so a failing commit never goes live. To set it up in another account:
 
 1. In Render choose New, Blueprint, and select this repository. Render reads `render.yaml`.
 2. Open the service, Settings, Deploy Hook, and copy the URL.
@@ -175,7 +183,7 @@ flowchart LR
 | ngrx Store | `frontend/src/app/store/contacts/`, `frontend/src/app/app.config.ts`, `frontend/src/app/api/contacts-api.ts` |
 | PrimeNG components | `frontend/src/app/app.config.ts` (`providePrimeNG`, Aura), `frontend/src/app/pages/contacts/contacts.html` (Table, ConfirmDialog), `frontend/src/app/components/contact-form/contact-form.html` (InputText, DatePicker, Fieldset), `frontend/src/app/components/layout/layout.html` |
 | Playwright e2e test | `e2e/ContactHub.E2E/` (.NET console app, `Program.Main`), `e2e` job in `.github/workflows/ci.yml` |
-| Tests | `backend/Api.Tests/DomainTests.cs`, `backend/Api.Tests/ContactsEndpointTests.cs`, `*.spec.ts` next to the frontend code |
+| Tests | `backend/Api.Tests/` (unit, 95% coverage gate), `backend/Api.Integration.Tests/` (HTTP endpoints), `*.spec.ts` next to the frontend code |
 
 ## Contact list features
 
