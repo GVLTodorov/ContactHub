@@ -20,8 +20,8 @@ USER node
 COPY --chown=node:node frontend/package*.json ./
 RUN npm ci --loglevel=error
 COPY --chown=node:node frontend/ ./
-EXPOSE 4200
-CMD ["npx", "ng", "serve", "--host", "0.0.0.0"]
+EXPOSE 4700
+CMD ["npx", "ng", "serve", "--host", "0.0.0.0", "--port", "4700"]
 
 FROM frontend AS frontend-build
 RUN npm run build
