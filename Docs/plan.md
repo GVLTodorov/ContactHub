@@ -231,7 +231,7 @@
 
 ### Task 6 — Add the Playwright end-to-end test
 
-- [ ] Done
+- [x] Done
 - Goal: one automated browser test proves a user can create a contact through the UI and see it in
   the list; it runs locally and in CI.
 - Builds on: 3
