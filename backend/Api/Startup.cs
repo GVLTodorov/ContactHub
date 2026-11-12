@@ -37,7 +37,13 @@ public class Startup(IConfiguration configuration)
     {
         using (var scope = app.ApplicationServices.CreateScope())
         {
-            scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.Migrate();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.Database.Migrate();
+
+            if (Configuration.GetValue<bool>("SeedDemoData"))
+            {
+                DemoDataSeeder.Seed(db, scope.ServiceProvider.GetRequiredService<TimeProvider>());
+            }
         }
 
         app.UseExceptionHandler();

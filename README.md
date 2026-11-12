@@ -1,5 +1,26 @@
 # ContactHub
 
+## Live demo
+
+| | URL |
+| --- | --- |
+| App | https://contacthub.onrender.com |
+| Swagger | https://contacthub.onrender.com/swagger |
+| Health | https://contacthub.onrender.com/api/health |
+| Source | https://github.com/GVLTodorov/ContactHub |
+
+The free Render service sleeps after 15 minutes without traffic, so the first request can take about
+a minute. Data resets to the demo contacts on every restart (SQLite on an ephemeral disk).
+
+| Coverage | Line | Branch |
+| --- | --- | --- |
+| Backend | ![backend line](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/backend/line.svg) | ![backend branch](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/backend/branch.svg) |
+| Frontend | ![frontend line](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/frontend/line.svg) | ![frontend branch](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/frontend/branch.svg) |
+
+![Demo](https://github.com/GVLTodorov/ContactHub/raw/badges/demo/demo.gif)
+
+---
+
 A small, single-user web app for managing personal contacts, built as an interview task
 ([requirements](Docs/Requirements.md), [design plan](Docs/plan.md)).
 
@@ -35,9 +56,29 @@ the test project's output folder, and the e2e run uses `contacthub_e2e.db`, whic
 before each run. In Docker Compose the backend mounts the named volume `dbdata` on
 `/app/database`. Running `dotnet clean` or deleting `bin/` wipes local data.
 
-CI (`.github/workflows/ci.yml`) runs backend, frontend and e2e jobs on every push.
-`.github/workflows/release.yml` builds a single image (API plus the built Angular app) and pushes
-it to GHCR on `main`.
+CI (`.github/workflows/ci.yml`) is one pipeline. On every push and pull request it runs the backend
+(format, build, unit and integration tests with coverage), frontend (lint, tests with coverage,
+build) and e2e jobs. On `main`, once those pass, it then:
+
+- pushes the single image (API plus the built Angular app) to GHCR as `:<version>` and `:latest`;
+- triggers a Render deploy through the `RENDER_DEPLOY_HOOK_URL` secret (skipped with a notice if unset);
+- builds the coverage badges (ReportGenerator) and the demo GIF (e2e demo mode, ffmpeg), and
+  pushes them to the orphan `badges` branch from a single job.
+
+Backend coverage combines `Api.Tests` (coverlet.msbuild) and `Api.Integration.Tests`
+(`--collect "XPlat Code Coverage"`). Frontend coverage is reported separately
+(`npm run test:coverage`).
+
+## Hosted on Render
+
+`render.yaml` describes a free Docker web service `contacthub` (Frankfurt) built from the root
+`Dockerfile` (final stage `app`: API, Swagger and the SPA on port 8080). It sets
+`SeedDemoData=true`, `healthCheckPath: /api/health` and `autoDeploy: false`.
+
+1. In Render choose New, Blueprint, and select this repository. Render reads `render.yaml`.
+2. Open the service, Settings, Deploy Hook, and copy the URL.
+3. In GitHub, Settings, Secrets and variables, Actions, add the secret `RENDER_DEPLOY_HOOK_URL`.
+4. Every green push to `main` now triggers a deploy. Without the secret the step is skipped.
 
 ## Architecture
 

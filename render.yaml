@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: contacthub
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    autoDeploy: false
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: SeedDemoData
+        value: "true"

@@ -17,24 +17,27 @@ internal static class Program
             return Microsoft.Playwright.Program.Main(args);
         }
 
+        var demo = args.Length > 0 && args[0] == "demo";
         var started = new List<Process>();
         try
         {
             var root = FindRepoRoot();
             var artifacts = Path.Combine(root, "e2e", "artifacts");
             var reuse = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI"));
+            var dbName = demo ? "contacthub_demo.db" : "contacthub_e2e.db";
+            var backendEnv = new Dictionary<string, string> { ["ConnectionStrings__Default"] = $"Data Source=database/{dbName}" };
+            if (demo)
+            {
+                backendEnv["SeedDemoData"] = "true";
+            }
 
-            DeleteE2EDatabase(root);
+            DeleteDatabase(root, dbName);
 
             var backendUp = await IsUp(BackendUrl);
 
             if (!(reuse && backendUp))
             {
-                var backend = StartProcess(
-                    "dotnet",
-                    ["run", "--project", Path.Combine("backend", "Api")],
-                    root,
-                    new Dictionary<string, string> { ["ConnectionStrings__Default"] = "Data Source=database/contacthub_e2e.db" });
+                var backend = StartProcess("dotnet", ["run", "--project", Path.Combine("backend", "Api")], root, backendEnv);
                 started.Add(backend);
                 await WaitFor(BackendUrl, TimeSpan.FromMinutes(5), backend);
             }
@@ -50,7 +53,7 @@ internal static class Program
                 await WaitFor(FrontendUrl, TimeSpan.FromMinutes(2), frontend);
             }
 
-            var exitCode = await RunScenario(artifacts);
+            var exitCode = demo ? await RunDemo(artifacts) : await RunScenario(artifacts);
 
             return exitCode;
         }
@@ -134,6 +137,110 @@ internal static class Program
         }
     }
 
+    private static async Task<int> RunDemo(string artifacts)
+    {
+        var demoDir = Path.Combine(artifacts, "demo");
+        var rawDir = Path.Combine(demoDir, "raw");
+        if (Directory.Exists(rawDir))
+        {
+            Directory.Delete(rawDir, recursive: true);
+        }
+
+        Directory.CreateDirectory(rawDir);
+        var target = Path.Combine(demoDir, "demo.webm");
+        if (File.Exists(target))
+        {
+            File.Delete(target);
+        }
+
+        var size = new RecordVideoSize { Width = 1280, Height = 720 };
+        string? videoPath = null;
+        var failure = (string?)null;
+
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { SlowMo = 300 });
+        var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1280, Height = 720 },
+            RecordVideoDir = rawDir,
+            RecordVideoSize = size,
+        });
+        var page = await context.NewPageAsync();
+
+        try
+        {
+            await page.GotoAsync("http://127.0.0.1:8080/swagger");
+            await page.Locator(".topbar-links a", new() { HasText = "Client" }).WaitForAsync();
+            await page.WaitForTimeoutAsync(1500);
+
+            var clientLink = page.GetByRole(AriaRole.Link, new() { Name = "Client", Exact = true });
+            // The link opens a new tab; keep the demo in one recorded page.
+            await clientLink.EvaluateAsync("a => a.target = '_self'");
+            await clientLink.ClickAsync();
+            await Assertions.Expect(page).ToHaveURLAsync(new Regex(@"127\.0\.0\.1:4700"));
+
+            await page.GotoAsync($"{FrontendUrl}/contacts");
+            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Ada Lovelace" })).ToBeVisibleAsync();
+            await page.WaitForTimeoutAsync(1500);
+
+            await page.GetByRole(AriaRole.Button, new() { Name = "New contact" }).ClickAsync();
+            await page.GetByLabel("First name").FillAsync("Nikola");
+            await page.GetByLabel("Surname").FillAsync("Tesla");
+            await page.GetByLabel("Date of birth").PressSequentiallyAsync("1985-07-10");
+            await page.Keyboard.PressAsync("Escape");
+            await page.GetByLabel("Phone number").FillAsync("+381 11 123 4567");
+            await page.GetByLabel("IBAN").FillAsync("NL91 ABNA 0417 1643 00");
+            await page.GetByLabel("Street").FillAsync("Bulevar Kralja Aleksandra 10");
+            await page.GetByLabel("Postal code").FillAsync("11000");
+            await page.GetByLabel("City").FillAsync("Belgrade");
+            await page.GetByLabel("Country").FillAsync("Serbia");
+            await page.GetByRole(AriaRole.Button, new() { Name = "Save contact" }).ClickAsync();
+            await Assertions.Expect(page).ToHaveURLAsync(new Regex(@"/contacts$"));
+            await page.WaitForTimeoutAsync(1000);
+
+            await page.GetByRole(AriaRole.Link, new() { Name = "Nikola Tesla" }).ClickAsync();
+            await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Nikola Tesla" })).ToBeVisibleAsync();
+            await page.WaitForTimeoutAsync(1500);
+
+            await page.GetByRole(AriaRole.Button, new() { Name = "Edit" }).ClickAsync();
+            await page.GetByLabel("City").FillAsync("Smiljan");
+            await page.GetByRole(AriaRole.Button, new() { Name = "Save contact" }).ClickAsync();
+            await Assertions.Expect(page.GetByText("Smiljan")).ToBeVisibleAsync();
+            await page.WaitForTimeoutAsync(1500);
+
+            await page.GetByRole(AriaRole.Button, new() { Name = "Delete" }).ClickAsync();
+            await page.WaitForTimeoutAsync(1000);
+            await page.GetByRole(AriaRole.Alertdialog).GetByRole(AriaRole.Button, new() { Name = "Delete" }).ClickAsync();
+            await Assertions.Expect(page).ToHaveURLAsync(new Regex(@"/contacts$"));
+            await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Nikola Tesla" })).ToHaveCountAsync(0);
+            await page.WaitForTimeoutAsync(2000);
+        }
+        catch (Exception ex)
+        {
+            failure = ex.Message;
+        }
+
+        videoPath = page.Video is null ? null : await page.Video.PathAsync();
+        await context.CloseAsync();
+
+        if (failure is not null)
+        {
+            Console.Error.WriteLine($"DEMO FAILED: {failure}");
+            return 1;
+        }
+
+        if (videoPath is null || !File.Exists(videoPath))
+        {
+            Console.Error.WriteLine("DEMO FAILED: no video was recorded");
+            return 1;
+        }
+
+        File.Move(videoPath, target, overwrite: true);
+        Directory.Delete(rawDir, recursive: true);
+        Console.WriteLine($"DEMO PASSED: {target}");
+        return 0;
+    }
+
     private static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
@@ -150,12 +257,12 @@ internal static class Program
         throw new InvalidOperationException("Repo root (global.json) not found above " + AppContext.BaseDirectory);
     }
 
-    private static void DeleteE2EDatabase(string root)
+    private static void DeleteDatabase(string root, string dbName)
     {
         var dir = Path.Combine(root, "backend", "Api", "bin", "Debug", "net10.0", "database");
         foreach (var suffix in new[] { "", "-shm", "-wal" })
         {
-            var file = Path.Combine(dir, $"contacthub_e2e.db{suffix}");
+            var file = Path.Combine(dir, $"{dbName}{suffix}");
             if (File.Exists(file))
             {
                 File.Delete(file);
