@@ -90,8 +90,9 @@
     `dotnet new webapi --use-controllers` (`AddControllers()` + `MapControllers()`, `[ApiController]`
     classes in `src/Api/Controllers/`, `GET /api/health` in `HealthController`), NUnit
     `tests/Api.Tests/`, one solution, SQLite `AppDbContext` with an initial empty migration,
-    `Database.Migrate()` at startup creating `database/contacthub.db` in the repo root (folder
-    created if missing, path resolved against the content root, per `CLAUDE.md`), Swagger at `/swagger` in Development, `dotnet-ef` tool
+    `Database.Migrate()` at startup creating `database/contacthub.db` in the app's output folder
+    (`bin/Debug/net10.0/database/`; folder created if missing, path resolved against
+    `AppContext.BaseDirectory`, per `CLAUDE.md`), Swagger at `/swagger` in Development, `dotnet-ef` tool
     manifest, `Directory.Build.props`, `.editorconfig`)
   - `frontend/` scaffolded as the frontend agent describes (Angular, zoneless, Tailwind v4,
     angular-eslint, `/api` proxy to `http://127.0.0.1:8080`, Vitest)
@@ -242,7 +243,7 @@
   - `@playwright/test` in `frontend/` with `playwright.config.ts` (Chromium only) and
     `frontend/e2e/create-contact.spec.ts`; `npm run e2e` script
   - `webServer` starts the backend (`dotnet run --project ../backend/src/Api` with
-    `ConnectionStrings__Default=Data Source=../../../database/contacthub_e2e.db`, file deleted before the run) and the Angular
+    `ConnectionStrings__Default=Data Source=database/contacthub_e2e.db`, file deleted before the run) and the Angular
     dev server, both on `127.0.0.1`
   - the test opens `/contacts/new`, fills every field with a valid IBAN and phone, saves, and
     asserts the new row (name and formatted IBAN) in the `/contacts` table; selects by label and
@@ -286,7 +287,9 @@
 
 - No accounts: single anonymous user, so the Identity phase is skipped.
 - Database is SQLite via EF Core, per `CLAUDE.md`. **User request:** the file is
-  `database/contacthub.db` in the repo root, created on first run; test and e2e files sit beside it.
+  `database/contacthub.db` in the running app's output folder (`bin/Debug/net10.0/database/`),
+  created on first run; test and e2e files follow the same rule. `dotnet clean` or deleting `bin/`
+  wipes the data.
 - **Conflict:** FluentValidation replaces the backend agent's DataAnnotations + `AddValidation()`
   default (Task 3): request validators on commands plus `ContactValidator` for the entity.
 - **Conflict:** PrimeNG (Aura theme) is used for all widgets although the frontend agent says "no
