@@ -168,4 +168,29 @@ public class ContactsEndpointTests
 
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
+
+    [Test]
+    public async Task Delete_Existing_Returns204AndContactIsGone()
+    {
+        var id = await CreateAsync("Ada", "Lovelace");
+
+        var response = await _client.DeleteAsync($"/api/contacts/{id}");
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));
+        var list = await _client.GetFromJsonAsync<JsonElement>("/api/contacts");
+        var ids = list.EnumerateArray().Select(e => e.GetProperty("id").GetGuid()).ToList();
+        Assert.That(ids, Does.Not.Contain(id));
+        var get = await _client.GetAsync($"/api/contacts/{id}");
+        Assert.That(get.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+    }
+
+    [Test]
+    public async Task Delete_Unknown_Returns404ProblemDetails()
+    {
+        var response = await _client.DeleteAsync($"/api/contacts/{Guid.NewGuid()}");
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.That(json.GetProperty("status").GetInt32(), Is.EqualTo(404));
+    }
 }

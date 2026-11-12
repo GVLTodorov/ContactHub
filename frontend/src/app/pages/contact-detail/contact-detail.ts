@@ -5,6 +5,8 @@ import { getRouterSelectors } from '@ngrx/router-store';
 import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ContactsPageActions } from '../../store/contacts/contacts.actions';
@@ -19,11 +21,13 @@ export function ageOf(dateOfBirth: string, today = new Date()): number {
 
 @Component({
   selector: 'app-contact-detail',
-  imports: [RouterLink, DatePipe, ButtonModule, CardModule, MessageModule, SkeletonModule],
+  imports: [RouterLink, DatePipe, ButtonModule, CardModule, MessageModule, SkeletonModule, ConfirmDialogModule],
+  providers: [ConfirmationService],
   templateUrl: './contact-detail.html',
 })
 export class ContactDetail {
   private readonly store = inject(Store);
+  private readonly confirmation = inject(ConfirmationService);
 
   protected readonly id = this.store.selectSignal(getRouterSelectors().selectRouteParam('id'));
   protected readonly contact = this.store.selectSignal(contactsFeature.selectSelectedContact);
@@ -38,6 +42,21 @@ export class ContactDetail {
     effect(() => {
       const id = this.id();
       if (id) this.store.dispatch(ContactsPageActions.detailOpened({ id }));
+    });
+  }
+
+  protected confirmDelete(): void {
+    const c = this.contact();
+    if (!c) return;
+    this.confirmation.confirm({
+      header: 'Delete contact',
+      message: `Delete ${c.firstName} ${c.surname}?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Delete',
+      rejectLabel: 'Cancel',
+      acceptButtonProps: { severity: 'danger' },
+      rejectButtonProps: { severity: 'secondary', outlined: true },
+      accept: () => this.store.dispatch(ContactsPageActions.deleteContact({ id: c.id })),
     });
   }
 

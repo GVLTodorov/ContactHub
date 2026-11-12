@@ -214,7 +214,7 @@
 
 ### Task 5 — Delete a contact
 
-- [ ] Done
+- [x] Done
 - Goal: the user deletes a contact after confirming, from the list or the detail page.
 - Builds on: 4
 - Areas: backend · frontend

@@ -58,9 +58,11 @@
       <ng-template #footer>
         <div class="flex gap-2">
           <p-button label="Edit" icon="pi pi-pencil" [routerLink]="['/contacts', c.id, 'edit']" />
+          <p-button label="Delete" icon="pi pi-trash" severity="danger" [outlined]="true" (onClick)="confirmDelete()" />
           <p-button label="Back to list" severity="secondary" [outlined]="true" routerLink="/contacts" />
         </div>
       </ng-template>
     </p-card>
   }
+  <p-confirmdialog />
 </section>

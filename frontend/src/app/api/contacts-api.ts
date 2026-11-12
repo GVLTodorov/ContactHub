@@ -74,4 +74,8 @@ export class ContactsApi {
   update(id: string, input: ContactInput): Observable<Contact> {
     return this.http.put<Contact>(`/api/contacts/${encodeURIComponent(id)}`, input);
   }
+
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(`/api/contacts/${encodeURIComponent(id)}`);
+  }
 }

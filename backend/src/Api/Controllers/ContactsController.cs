@@ -42,6 +42,18 @@ public class ContactsController : ControllerBase
             new UpdateContactCommand(id, body.FirstName, body.Surname, body.DateOfBirth, body.Address, body.PhoneNumber, body.Iban),
             cancellationToken);
 
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(
+        Guid id,
+        [FromServices] ICommandHandler<DeleteContactCommand, Unit> handler,
+        CancellationToken cancellationToken)
+    {
+        await handler.HandleAsync(new DeleteContactCommand(id), cancellationToken);
+        return NoContent();
+    }
+
     [HttpGet]
     [ProducesResponseType<IReadOnlyList<ContactDto>>(StatusCodes.Status200OK)]
     public async Task<IReadOnlyList<ContactDto>> List(

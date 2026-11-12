@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { ConfirmationService } from 'primeng/api';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { Contact } from '../../api/contacts-api';
 import { ContactsPageActions } from '../../store/contacts/contacts.actions';
@@ -69,6 +70,21 @@ describe('ContactDetail', () => {
     expect(text).toContain('Updated');
     expect(text).toContain('Edit');
     expect(text).toContain('Back to list');
+  });
+
+  it('confirms by name, then dispatches delete', async () => {
+    const { fixture, store, el } = setup('success', contact);
+    await fixture.whenStable();
+    const confirmation = fixture.debugElement.injector.get(ConfirmationService);
+    const confirm = vi.spyOn(confirmation, 'confirm');
+    const dispatch = vi.spyOn(store, 'dispatch');
+    const btn = Array.from(el.querySelectorAll('button')).find((b) => b.textContent?.includes('Delete'));
+    btn?.click();
+    await fixture.whenStable();
+    expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ message: 'Delete Ann Lee?' }));
+    expect(dispatch).not.toHaveBeenCalledWith(ContactsPageActions.deleteContact({ id: '1' }));
+    confirm.mock.calls[0][0].accept?.();
+    expect(dispatch).toHaveBeenCalledWith(ContactsPageActions.deleteContact({ id: '1' }));
   });
 
   it('computes age', () => {

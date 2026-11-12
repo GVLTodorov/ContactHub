@@ -77,6 +77,17 @@ describe('contacts reducer', () => {
     expect(err.detailError).toBe('nope');
   });
 
+  it('removes a contact on delete success', () => {
+    let s = reducer(
+      initialState,
+      ContactsApiActions.loadSuccess({ contacts: [make('1', 'A', 'B'), make('2', 'C', 'D')] }),
+    );
+    s = reducer(s, ContactsApiActions.deleteContactSuccess({ id: '1' }));
+    expect(s.ids).toEqual(['2']);
+    s = reducer(s, ContactsApiActions.deleteContactFailure({ error: { message: 'x', fieldErrors: {} } }));
+    expect(s.ids).toEqual(['2']);
+  });
+
   it('tracks update lifecycle', () => {
     let s = reducer(initialState, ContactsPageActions.updateSubmitted({ id: '1', input: {} as ContactInput }));
     expect(s.saveStatus).toBe('loading');

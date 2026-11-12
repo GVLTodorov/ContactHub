@@ -49,6 +49,15 @@ describe('ContactsApi', () => {
     expect(result).toEqual({ id: 'abc' });
   });
 
+  it('deletes a contact with DELETE', () => {
+    let done = false;
+    api.delete('abc').subscribe(() => (done = true));
+    const req = http.expectOne('/api/contacts/abc');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+    expect(done).toBe(true);
+  });
+
   it('updates a contact with PUT', () => {
     const input = { firstName: 'A' } as ContactInput;
     api.update('abc', input).subscribe();

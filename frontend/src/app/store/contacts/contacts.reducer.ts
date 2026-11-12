@@ -101,6 +101,7 @@ export const contactsFeature = createFeature({
       error: error.message,
       fieldErrors: error.fieldErrors,
     })),
+    on(ContactsApiActions.deleteContactSuccess, (state, { id }) => adapter.removeOne(id, state)),
   ),
   extraSelectors: ({ selectContactsState, selectLoadStatus, selectEntities }) => {
     const selectAllContacts = createSelector(selectContactsState, adapter.getSelectors().selectAll);

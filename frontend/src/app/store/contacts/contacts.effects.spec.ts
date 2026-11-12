@@ -11,7 +11,7 @@ import { ContactsEffects } from './contacts.effects';
 describe('ContactsEffects', () => {
   const contact = { id: '1', firstName: 'Ann', surname: 'Lee' } as Contact;
   let actions$: Observable<unknown>;
-  const api = { list: vi.fn(), create: vi.fn(), get: vi.fn(), update: vi.fn() };
+  const api = { list: vi.fn(), create: vi.fn(), get: vi.fn(), update: vi.fn(), delete: vi.fn() };
   const router = { navigate: vi.fn() };
   const messages = { add: vi.fn() };
 
@@ -118,6 +118,38 @@ describe('ContactsEffects', () => {
     expect(result).toEqual(
       ContactsApiActions.updateFailure({ error: { message: 'Validation failed', fieldErrors: errors, status: 400 } }),
     );
+  });
+
+  it('deletes a contact', () => {
+    api.delete.mockReturnValue(of(undefined));
+    actions$ = of(ContactsPageActions.deleteContact({ id: '1' }));
+    let result: unknown;
+    effects().delete$.subscribe((a) => (result = a));
+    expect(api.delete).toHaveBeenCalledWith('1');
+    expect(result).toEqual(ContactsApiActions.deleteContactSuccess({ id: '1' }));
+  });
+
+  it('maps delete errors to a failure action', () => {
+    api.delete.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404, error: { title: 'Not Found' } })));
+    actions$ = of(ContactsPageActions.deleteContact({ id: '1' }));
+    let result: unknown;
+    effects().delete$.subscribe((a) => (result = a));
+    expect(result).toEqual(
+      ContactsApiActions.deleteContactFailure({ error: { message: 'Not Found', fieldErrors: {}, status: 404 } }),
+    );
+  });
+
+  it('toasts and navigates to the list on delete success', () => {
+    actions$ = of(ContactsApiActions.deleteContactSuccess({ id: '1' }));
+    effects().deleteSuccess$.subscribe();
+    expect(messages.add).toHaveBeenCalledWith(expect.objectContaining({ severity: 'success', summary: 'Contact deleted' }));
+    expect(router.navigate).toHaveBeenCalledWith(['/contacts']);
+  });
+
+  it('toasts the error on delete failure', () => {
+    actions$ = of(ContactsApiActions.deleteContactFailure({ error: { message: 'Nope', fieldErrors: {} } }));
+    effects().deleteFailure$.subscribe();
+    expect(messages.add).toHaveBeenCalledWith(expect.objectContaining({ severity: 'error', detail: 'Nope' }));
   });
 
   it('toasts and navigates to the detail page on update success', () => {

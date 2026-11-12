@@ -80,6 +80,41 @@ export class ContactsEffects {
     { dispatch: false },
   );
 
+  readonly delete$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(ContactsPageActions.deleteContact),
+      exhaustMap(({ id }) =>
+        this.api.delete(id).pipe(
+          map(() => ContactsApiActions.deleteContactSuccess({ id })),
+          catchError((e) => of(ContactsApiActions.deleteContactFailure({ error: toApiError(e) }))),
+        ),
+      ),
+    ),
+  );
+
+  readonly deleteSuccess$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(ContactsApiActions.deleteContactSuccess),
+        tap(() => {
+          this.messages.add({ severity: 'success', summary: 'Contact deleted' });
+          void this.router.navigate(['/contacts']);
+        }),
+      ),
+    { dispatch: false },
+  );
+
+  readonly deleteFailure$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(ContactsApiActions.deleteContactFailure),
+        tap(({ error }) =>
+          this.messages.add({ severity: 'error', summary: 'Could not delete contact', detail: error.message }),
+        ),
+      ),
+    { dispatch: false },
+  );
+
   readonly createSuccessNavigate$ = createEffect(
     () =>
       this.actions$.pipe(
