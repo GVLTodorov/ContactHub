@@ -86,7 +86,9 @@
 - Endpoints: `GET /api/health` — no request → `{ status: "ok" }`
 - Screens: `/` — Angular placeholder page from the scaffold (replaced in Task 2)
 - Done when:
-  - `backend/` scaffolded as the backend agent describes (Minimal API in `src/Api/`, NUnit
+  - `backend/` scaffolded as the backend agent describes, except `src/Api/` comes from
+    `dotnet new webapi --use-controllers` (`AddControllers()` + `MapControllers()`, `[ApiController]`
+    classes in `src/Api/Controllers/`, `GET /api/health` in `HealthController`), NUnit
     `tests/Api.Tests/`, one solution, SQLite `AppDbContext` with an initial empty migration,
     `Database.Migrate()` at startup, Swagger at `/swagger` in Development, `dotnet-ef` tool
     manifest, `Directory.Build.props`, `.editorconfig`)
@@ -152,11 +154,13 @@
 - Done when:
   - backend folders: `Domain/` (entity, value objects, `ContactValidator`,
     `DomainValidationException`), `Application/` (CQRS interfaces, commands, queries, handlers,
-    request validators), `Data/` (`AppDbContext`, `ContactConfiguration`), `Endpoints/`
+    request validators), `Data/` (`AppDbContext`, `ContactConfiguration`), `Controllers/`
+    (`ContactsController`, `[ApiController]`, `[Route("api/contacts")]`)
   - hand-rolled `ICommand<TResult>`, `IQuery<TResult>`, `ICommandHandler<TCommand, TResult>`,
     `IQueryHandler<TQuery, TResult>`; handlers registered in DI by an `AddApplication()` extension;
     a validation decorator runs the FluentValidation command validator before every command
-    handler; endpoints only resolve a handler and map the result; no MediatR
+    handler; controller actions stay thin: they inject the handler, dispatch the command or query
+    and map the result to an HTTP response; no MediatR
   - `CreateContactCommand` + `CreateContactCommandValidator` (reuses `PhoneNumber.IsValid`,
     `Iban.IsValid`); `ListContactsQuery` reads with `AsNoTracking` projections
   - FluentValidation replaces DataAnnotations; `ValidationException` and
@@ -264,7 +268,7 @@
     survives navigating to a contact and back
   - on narrow screens the table collapses to stacked rows and the form to one column
   - `README.md`: what the app does, how to run it (local, Docker Compose, tests, e2e), architecture
-    overview (Domain / Application / Data / Endpoints, CQRS flow, validation layers, ngrx data
+    overview (Domain / Application / Data / Controllers, CQRS flow, validation layers, ngrx data
     flow) and a table mapping each interview requirement to files
   - lint, unit tests and the e2e test pass
 
@@ -292,7 +296,11 @@
 - **Conflict:** typed Reactive Forms instead of Signal Forms, because PrimeNG inputs are
   `ControlValueAccessor` based (Task 3).
 - **Conflict:** one `src/Api` project (per `CLAUDE.md`) split into `Domain/`, `Application/`,
-  `Data/`, `Endpoints/` folders; entities live in `Domain/`, not `Data/`.
+  `Data/`, `Controllers/` folders; entities live in `Domain/`, not `Data/`.
+- **User request:** ASP.NET Core controllers (`[ApiController]` classes in
+  `src/Api/Controllers/`, scaffolded with `dotnet new webapi --use-controllers`), no Minimal APIs;
+  `CLAUDE.md` and the backend agent say the same. Controllers stay thin and only dispatch to CQRS
+  handlers (Tasks 1, 3).
 - CQRS uses one database and one `DbContext`; queries use `AsNoTracking` projections.
 - Address is structured (street, postal code, city, country); the requirement only says "address".
 - Phone and IBAN rules are hand-rolled (format + digit count; format + mod-97), no external

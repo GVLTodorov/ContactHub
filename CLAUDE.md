@@ -3,7 +3,7 @@
 ## Stack
 
 - .NET SDK 10 (`global.json`), nullable C#; Node 24 (`.nvmrc`)
-- `backend/`: ASP.NET Core Minimal APIs, `src/Api/`, NUnit in `tests/Api.Tests/`, one solution file
+- `backend/`: ASP.NET Core Web API with controllers (no Minimal APIs), `src/Api/`, NUnit in `tests/Api.Tests/`, one solution file
 - `frontend/`: tested with Vitest
 - `Dockerfile`, `compose.yml`, `.github/`: Docker Compose, GitHub Actions
 
