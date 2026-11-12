@@ -11,6 +11,11 @@ import { HealthApi } from '../../api/health-api';
   templateUrl: './layout.html',
 })
 export class Layout {
+  protected readonly navItems = [
+    { path: '/', label: 'Home', icon: 'pi pi-home', exact: true },
+    { path: '/contacts', label: 'Contacts', icon: 'pi pi-users', exact: false },
+  ];
+
   private readonly api = inject(HealthApi);
 
   protected readonly status = computed<'loading' | 'online' | 'offline'>(() => {

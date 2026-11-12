@@ -4,33 +4,41 @@
     <ng-template #start>
       <a routerLink="/" class="text-xl font-semibold">ContactHub</a>
     </ng-template>
-    <ng-template #end>
-      <nav aria-label="Main">
-        <a
-          routerLink="/"
-          routerLinkActive="font-bold underline"
-          [routerLinkActiveOptions]="{ exact: true }"
-          class="px-3 py-2"
-          >Home</a
-        >
-        <a
-          routerLink="/contacts"
-          routerLinkActive="font-bold underline"
-          class="px-3 py-2"
-          >Contacts</a
-        >
-      </nav>
-    </ng-template>
   </p-toolbar>
 
-  <main class="mx-auto w-full max-w-5xl flex-1 p-4">
-    <router-outlet />
-  </main>
+  <div class="flex flex-1">
+    <nav
+      aria-label="Main"
+      class="w-14 shrink-0 border-r border-surface bg-surface-0 p-2 md:w-56 dark:bg-surface-900"
+    >
+      <ul class="m-0 flex list-none flex-col gap-1 p-0">
+        @for (item of navItems; track item.path) {
+          <li>
+            <a
+              [routerLink]="item.path"
+              routerLinkActive="bg-primary/10 text-primary font-semibold"
+              ariaCurrentWhenActive="page"
+              [routerLinkActiveOptions]="{ exact: item.exact }"
+              [attr.title]="item.label"
+              class="flex items-center justify-center gap-3 rounded-md p-3 hover:bg-surface-100 md:justify-start dark:hover:bg-surface-800"
+            >
+              <i [class]="item.icon" aria-hidden="true"></i>
+              <span class="sr-only md:not-sr-only">{{ item.label }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <main class="mx-auto w-full min-w-0 max-w-5xl flex-1 p-4">
+      <router-outlet />
+    </main>
+  </div>
 
   <footer class="flex items-center justify-end gap-2 p-4">
     @switch (status()) {
       @case ('loading') {
-        <p-tag severity="secondary" value="API checking…" role="status" />
+        <p-tag severity="secondary" value="API checkingâ€¦" role="status" />
       }
       @case ('online') {
         <p-tag severity="success" value="API online" role="status" />
