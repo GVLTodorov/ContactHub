@@ -1,0 +1,26 @@
+services:
+  backend:
+    build:
+      context: .
+      target: backend
+    environment:
+      ConnectionStrings__Default: Data Source=database/contacthub.db
+      ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - "8080:8080"
+    volumes:
+      - dbdata:/app/database
+
+  frontend:
+    build:
+      context: .
+      target: frontend
+    environment:
+      API_URL: http://backend:8080
+    ports:
+      - "${FRONTEND_PORT:-4200}:4200"
+    depends_on:
+      - backend
+
+volumes:
+  dbdata:

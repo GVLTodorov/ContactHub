@@ -77,7 +77,7 @@
 
 ### Task 1 — Set up the project foundation
 
-- [ ] Done
+- [x] Done
 - Goal: backend and frontend scaffolds run locally and in Docker Compose; CI checks both on every
   push.
 - Builds on: —
@@ -306,6 +306,11 @@
   `src/Api/Controllers/`, scaffolded with `dotnet new webapi --use-controllers`), no Minimal APIs;
   `CLAUDE.md` and the backend agent say the same. Controllers stay thin and only dispatch to CQRS
   handlers (Tasks 1, 3).
+- **User request:** classic hosting, no minimal hosting model: `Program` with `static Main` and
+  `CreateHostBuilder` (`Host.CreateDefaultBuilder` + `UseStartup<Startup>`); services in
+  `Startup.ConfigureServices`, pipeline in `Startup.Configure` (`UseRouting` + `UseEndpoints` →
+  `MapControllers`). Swagger via Swashbuckle (`AddSwaggerGen`, `UseSwagger`, `UseSwaggerUI`), no
+  `MapOpenApi`. New registrations (e.g. `AddApplication()`) go in `ConfigureServices`.
 - CQRS uses one database and one `DbContext`; queries use `AsNoTracking` projections.
 - Address is structured (street, postal code, city, country); the requirement only says "address".
 - Phone and IBAN rules are hand-rolled (format + digit count; format + mod-97), no external
