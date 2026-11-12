@@ -1,4 +1,4 @@
-namespace Api.Tests;
+namespace Api.Integration.Tests;
 
 [SetUpFixture]
 public class TestSetup
