@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { getRouterSelectors } from '@ngrx/router-store';
@@ -20,9 +20,11 @@ export function ageOf(dateOfBirth: string, today = new Date()): number {
   return age;
 }
 
+type CopyField = 'phone' | 'iban' | 'address';
+
 @Component({
   selector: 'app-contact-detail',
-  imports: [RouterLink, DatePipe, AvatarModule, ButtonModule, CardModule, MessageModule, SkeletonModule, ConfirmDialogModule],
+  imports: [RouterLink, DatePipe, NgTemplateOutlet, AvatarModule, ButtonModule, CardModule, MessageModule, SkeletonModule, ConfirmDialogModule],
   providers: [ConfirmationService],
   templateUrl: './contact-detail.html',
 })
@@ -43,7 +45,8 @@ export class ContactDetail {
     const c = this.contact();
     return c ? ((c.firstName[0] ?? '') + (c.surname[0] ?? '')).toUpperCase() : '';
   });
-  protected readonly copied = signal(false);
+  protected readonly copied = signal<CopyField | null>(null);
+  private copiedTimer?: ReturnType<typeof setTimeout>;
 
   constructor() {
     effect(() => {
@@ -67,16 +70,22 @@ export class ContactDetail {
     });
   }
 
-  protected async copyIban(): Promise<void> {
+  protected async copy(field: CopyField): Promise<void> {
     const c = this.contact();
     if (!c) return;
+    const text = {
+      phone: c.phoneNumber,
+      iban: c.iban,
+      address: `${c.address.street}, ${c.address.postalCode} ${c.address.city}, ${c.address.country}`,
+    }[field];
     try {
-      await navigator.clipboard.writeText(c.iban);
+      await navigator.clipboard.writeText(text);
     } catch {
       return;
     }
-    this.copied.set(true);
-    setTimeout(() => this.copied.set(false), 2000);
+    clearTimeout(this.copiedTimer);
+    this.copied.set(field);
+    this.copiedTimer = setTimeout(() => this.copied.set(null), 2000);
   }
 
   protected retry(): void {

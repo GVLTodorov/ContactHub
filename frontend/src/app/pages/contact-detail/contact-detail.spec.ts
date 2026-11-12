@@ -74,15 +74,20 @@ describe('ContactDetail', () => {
     expect(el.querySelector('a[href="/contacts"]')?.textContent).toContain('Back to contacts');
   });
 
-  it('copies the IBAN', async () => {
+  it.each([
+    ['Copy IBAN', 'DE89370400440532013000'],
+    ['Copy phone number', '+4912345678'],
+    ['Copy address', 'Main 1, 1000 Berlin, DE'],
+  ])('%s copies the value and shows feedback only next to it', async (label, expected) => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
     const { fixture, el } = setup('success', contact);
     await fixture.whenStable();
-    el.querySelector<HTMLButtonElement>('button[aria-label="Copy IBAN"]')?.click();
+    el.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)?.click();
     await fixture.whenStable();
-    expect(writeText).toHaveBeenCalledWith('DE89370400440532013000');
-    expect(el.textContent).toContain('Copied');
+    expect(writeText).toHaveBeenCalledWith(expected);
+    const feedback = Array.from(el.querySelectorAll('[role="status"]')).filter((s) => s.textContent?.includes('Copied'));
+    expect(feedback).toHaveLength(1);
   });
 
   it('confirms by name, then dispatches delete', async () => {

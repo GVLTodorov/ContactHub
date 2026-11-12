@@ -52,22 +52,16 @@
           <dl class="flex flex-col gap-3">
             <div class="flex items-center gap-3">
               <dt><i class="pi pi-phone text-surface-500" aria-hidden="true"></i><span class="sr-only">Phone number</span></dt>
-              <dd><a [href]="'tel:' + c.phoneNumber" class="text-primary hover:underline">{{ c.phoneNumber }}</a></dd>
+              <dd class="flex items-center gap-2">
+                <a [href]="'tel:' + c.phoneNumber" class="text-primary hover:underline">{{ c.phoneNumber }}</a>
+                <ng-container *ngTemplateOutlet="copyButton; context: { field: 'phone', label: 'Copy phone number' }" />
+              </dd>
             </div>
             <div class="flex items-center gap-3">
               <dt><i class="pi pi-building-columns text-surface-500" aria-hidden="true"></i><span class="sr-only">IBAN</span></dt>
               <dd class="flex items-center gap-2">
                 <span class="font-mono">{{ c.ibanFormatted }}</span>
-                <p-button
-                  [icon]="copied() ? 'pi pi-check' : 'pi pi-copy'"
-                  [text]="true"
-                  [rounded]="true"
-                  severity="secondary"
-                  size="small"
-                  ariaLabel="Copy IBAN"
-                  (onClick)="copyIban()"
-                />
-                <span class="text-xs text-surface-500" role="status">{{ copied() ? 'Copied' : '' }}</span>
+                <ng-container *ngTemplateOutlet="copyButton; context: { field: 'iban', label: 'Copy IBAN' }" />
               </dd>
             </div>
           </dl>
@@ -77,9 +71,12 @@
           <h2 id="address-heading" class="text-xs font-semibold uppercase tracking-wide text-surface-500 dark:text-surface-400">Address</h2>
           <dl class="flex items-start gap-3">
             <dt><i class="pi pi-map-marker text-surface-500" aria-hidden="true"></i><span class="sr-only">Address</span></dt>
-            <dd>
-              <div>{{ c.address.street }}</div>
-              <div>{{ c.address.postalCode }} {{ c.address.city }}, {{ c.address.country }}</div>
+            <dd class="flex items-start gap-2">
+              <div>
+                <div>{{ c.address.street }}</div>
+                <div>{{ c.address.postalCode }} {{ c.address.city }}, {{ c.address.country }}</div>
+              </div>
+              <ng-container *ngTemplateOutlet="copyButton; context: { field: 'address', label: 'Copy address' }" />
             </dd>
           </dl>
         </section>
@@ -92,3 +89,18 @@
   }
   <p-confirmdialog />
 </section>
+
+<ng-template #copyButton let-field="field" let-label="label">
+  <span class="inline-flex items-center gap-1">
+    <p-button
+      [icon]="copied() === field ? 'pi pi-check' : 'pi pi-copy'"
+      [text]="true"
+      [rounded]="true"
+      severity="secondary"
+      size="small"
+      [ariaLabel]="label"
+      (onClick)="copy(field)"
+    />
+    <span class="text-xs text-surface-500" role="status">{{ copied() === field ? 'Copied' : '' }}</span>
+  </span>
+</ng-template>
