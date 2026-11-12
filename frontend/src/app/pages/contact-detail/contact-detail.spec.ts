@@ -43,7 +43,7 @@ describe('ContactDetail', () => {
     const { fixture, el } = setup('notFound', null);
     await fixture.whenStable();
     expect(el.textContent).toContain('Contact not found');
-    expect(el.textContent).toContain('Back to list');
+    expect(el.textContent).toContain('Back to contacts');
   });
 
   it('shows the error state and retries', async () => {
@@ -65,11 +65,24 @@ describe('ContactDetail', () => {
     expect(text).toContain('DE89 3704 0044 0532 0130 00');
     expect(text).toContain('Berlin');
     expect(text).toContain('+4912345678');
-    expect(text).toContain('(age ');
+    expect(text).toMatch(/Age \d+ · Born May 20, 1990/);
     expect(text).toContain('Created');
     expect(text).toContain('Updated');
     expect(text).toContain('Edit');
-    expect(text).toContain('Back to list');
+    expect(el.querySelector('h1')?.textContent?.trim()).toBe('Ann Lee');
+    expect(el.querySelector('a[href^="tel:"]')?.getAttribute('href')).toBe('tel:+4912345678');
+    expect(el.querySelector('a[href="/contacts"]')?.textContent).toContain('Back to contacts');
+  });
+
+  it('copies the IBAN', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const { fixture, el } = setup('success', contact);
+    await fixture.whenStable();
+    el.querySelector<HTMLButtonElement>('button[aria-label="Copy IBAN"]')?.click();
+    await fixture.whenStable();
+    expect(writeText).toHaveBeenCalledWith('DE89370400440532013000');
+    expect(el.textContent).toContain('Copied');
   });
 
   it('confirms by name, then dispatches delete', async () => {

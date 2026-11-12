@@ -1,8 +1,9 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, effect, inject } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { getRouterSelectors } from '@ngrx/router-store';
 import { Store } from '@ngrx/store';
+import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -21,7 +22,7 @@ export function ageOf(dateOfBirth: string, today = new Date()): number {
 
 @Component({
   selector: 'app-contact-detail',
-  imports: [RouterLink, DatePipe, ButtonModule, CardModule, MessageModule, SkeletonModule, ConfirmDialogModule],
+  imports: [RouterLink, DatePipe, AvatarModule, ButtonModule, CardModule, MessageModule, SkeletonModule, ConfirmDialogModule],
   providers: [ConfirmationService],
   templateUrl: './contact-detail.html',
 })
@@ -37,6 +38,12 @@ export class ContactDetail {
     const c = this.contact();
     return c ? ageOf(c.dateOfBirth) : null;
   });
+
+  protected readonly initials = computed(() => {
+    const c = this.contact();
+    return c ? ((c.firstName[0] ?? '') + (c.surname[0] ?? '')).toUpperCase() : '';
+  });
+  protected readonly copied = signal(false);
 
   constructor() {
     effect(() => {
@@ -58,6 +65,18 @@ export class ContactDetail {
       rejectButtonProps: { severity: 'secondary', outlined: true },
       accept: () => this.store.dispatch(ContactsPageActions.deleteContact({ id: c.id })),
     });
+  }
+
+  protected async copyIban(): Promise<void> {
+    const c = this.contact();
+    if (!c) return;
+    try {
+      await navigator.clipboard.writeText(c.iban);
+    } catch {
+      return;
+    }
+    this.copied.set(true);
+    setTimeout(() => this.copied.set(false), 2000);
   }
 
   protected retry(): void {
