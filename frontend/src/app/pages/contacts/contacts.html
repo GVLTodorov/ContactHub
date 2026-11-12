@@ -33,7 +33,11 @@
       </ng-template>
       <ng-template #body let-c>
         <tr>
-          <td>{{ c.firstName }} {{ c.surname }}</td>
+          <td>
+            <a [routerLink]="['/contacts', c.id]" class="text-primary font-medium hover:underline">
+              {{ c.firstName }} {{ c.surname }}
+            </a>
+          </td>
           <td>{{ c.dateOfBirth | date: 'mediumDate' }}</td>
           <td>{{ c.phoneNumber }}</td>
           <td>{{ c.ibanFormatted }}</td>

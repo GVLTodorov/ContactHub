@@ -11,7 +11,7 @@ import { ContactsEffects } from './contacts.effects';
 describe('ContactsEffects', () => {
   const contact = { id: '1', firstName: 'Ann', surname: 'Lee' } as Contact;
   let actions$: Observable<unknown>;
-  const api = { list: vi.fn(), create: vi.fn() };
+  const api = { list: vi.fn(), create: vi.fn(), get: vi.fn(), update: vi.fn() };
   const router = { navigate: vi.fn() };
   const messages = { add: vi.fn() };
 
@@ -43,7 +43,7 @@ describe('ContactsEffects', () => {
     actions$ = of(ContactsPageActions.retry());
     let result: unknown;
     effects().load$.subscribe((a) => (result = a));
-    expect(result).toEqual(ContactsApiActions.loadFailure({ error: { message: 'Server broke', fieldErrors: {} } }));
+    expect(result).toEqual(ContactsApiActions.loadFailure({ error: { message: 'Server broke', fieldErrors: {}, status: 500 } }));
   });
 
   it('creates a contact', () => {
@@ -63,7 +63,7 @@ describe('ContactsEffects', () => {
     let result: unknown;
     effects().create$.subscribe((a) => (result = a));
     expect(result).toEqual(
-      ContactsApiActions.createFailure({ error: { message: 'Validation failed', fieldErrors: errors } }),
+      ContactsApiActions.createFailure({ error: { message: 'Validation failed', fieldErrors: errors, status: 400 } }),
     );
   });
 
@@ -73,6 +73,57 @@ describe('ContactsEffects', () => {
     e.createSuccessNavigate$.subscribe();
     e.createSuccessToast$.subscribe();
     expect(router.navigate).toHaveBeenCalledWith(['/contacts']);
+    expect(messages.add).toHaveBeenCalledWith(expect.objectContaining({ severity: 'success' }));
+  });
+
+  it('loads one contact', () => {
+    api.get.mockReturnValue(of(contact));
+    actions$ = of(ContactsPageActions.detailOpened({ id: '1' }));
+    let result: unknown;
+    effects().loadOne$.subscribe((a) => (result = a));
+    expect(api.get).toHaveBeenCalledWith('1');
+    expect(result).toEqual(ContactsApiActions.loadOneSuccess({ contact }));
+  });
+
+  it('flags 404 as not found and others as errors', () => {
+    api.get.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404, error: { title: 'Not Found' } })));
+    actions$ = of(ContactsPageActions.detailOpened({ id: '1' }));
+    let result: { notFound?: boolean } = {};
+    const e = effects();
+    e.loadOne$.subscribe((a) => (result = a as never));
+    expect(result.notFound).toBe(true);
+
+    api.get.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    e.loadOne$.subscribe((a) => (result = a as never));
+    expect(result.notFound).toBe(false);
+  });
+
+  it('updates a contact', () => {
+    api.update.mockReturnValue(of(contact));
+    actions$ = of(ContactsPageActions.updateSubmitted({ id: '1', input: {} as ContactInput }));
+    let result: unknown;
+    effects().update$.subscribe((a) => (result = a));
+    expect(api.update).toHaveBeenCalledWith('1', {});
+    expect(result).toEqual(ContactsApiActions.updateSuccess({ contact }));
+  });
+
+  it('maps validation errors on update', () => {
+    const errors = { 'address.city': ['Required'] };
+    api.update.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 400, error: { title: 'Validation failed', errors } })),
+    );
+    actions$ = of(ContactsPageActions.updateSubmitted({ id: '1', input: {} as ContactInput }));
+    let result: unknown;
+    effects().update$.subscribe((a) => (result = a));
+    expect(result).toEqual(
+      ContactsApiActions.updateFailure({ error: { message: 'Validation failed', fieldErrors: errors, status: 400 } }),
+    );
+  });
+
+  it('toasts and navigates to the detail page on update success', () => {
+    actions$ = of(ContactsApiActions.updateSuccess({ contact }));
+    effects().updateSuccess$.subscribe();
+    expect(router.navigate).toHaveBeenCalledWith(['/contacts', '1']);
     expect(messages.add).toHaveBeenCalledWith(expect.objectContaining({ severity: 'success' }));
   });
 });

@@ -26,4 +26,19 @@ describe('contacts selectors', () => {
     expect(contactsFeature.selectError(s)).toBeNull();
     expect(contactsFeature.selectFieldErrors(s)).toEqual({});
   });
+
+  it('selects the contact for the route id', () => {
+    const c = { id: '1', firstName: 'A', surname: 'B' } as Contact;
+    const router = (id: string) => ({
+      state: { url: '', root: { params: { id }, firstChild: null } },
+      navigationId: 1,
+    });
+    const contacts = appState([c]).contacts;
+    expect(contactsFeature.selectSelectedContact({ contacts, router: router('1') } as never)).toEqual(c);
+    expect(contactsFeature.selectSelectedContact({ contacts, router: router('2') } as never)).toBeNull();
+  });
+
+  it('selects detail status', () => {
+    expect(contactsFeature.selectDetailStatus(appState(null))).toBe('idle');
+  });
 });

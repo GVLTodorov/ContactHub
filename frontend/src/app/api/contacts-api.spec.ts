@@ -39,4 +39,22 @@ describe('ContactsApi', () => {
     expect(req.request.body).toEqual(input);
     req.flush({ id: '1', ...input });
   });
+
+  it('gets one contact', () => {
+    let result: unknown;
+    api.get('abc').subscribe((r) => (result = r));
+    const req = http.expectOne('/api/contacts/abc');
+    expect(req.request.method).toBe('GET');
+    req.flush({ id: 'abc' });
+    expect(result).toEqual({ id: 'abc' });
+  });
+
+  it('updates a contact with PUT', () => {
+    const input = { firstName: 'A' } as ContactInput;
+    api.update('abc', input).subscribe();
+    const req = http.expectOne('/api/contacts/abc');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual(input);
+    req.flush({ id: 'abc' });
+  });
 });

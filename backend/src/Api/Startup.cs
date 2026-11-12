@@ -16,6 +16,7 @@ public class Startup(IConfiguration configuration)
         services.AddControllers(o => o.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true);
         services.AddProblemDetails();
         services.AddExceptionHandler<ValidationExceptionHandler>();
+        services.AddExceptionHandler<NotFoundExceptionHandler>();
         services.AddSingleton(TimeProvider.System);
         services.AddApplication();
         services.AddEndpointsApiExplorer();

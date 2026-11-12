@@ -8,6 +8,8 @@ export const ContactsPageActions = createActionGroup({
     Retry: emptyProps(),
     'Form Opened': emptyProps(),
     'Create Submitted': props<{ input: ContactInput }>(),
+    'Detail Opened': props<{ id: string }>(),
+    'Update Submitted': props<{ id: string; input: ContactInput }>(),
   },
 });
 
@@ -18,5 +20,9 @@ export const ContactsApiActions = createActionGroup({
     'Load Failure': props<{ error: ApiError }>(),
     'Create Success': props<{ contact: Contact }>(),
     'Create Failure': props<{ error: ApiError }>(),
+    'Load One Success': props<{ contact: Contact }>(),
+    'Load One Failure': props<{ error: ApiError; notFound: boolean }>(),
+    'Update Success': props<{ contact: Contact }>(),
+    'Update Failure': props<{ error: ApiError }>(),
   },
 });

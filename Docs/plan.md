@@ -185,7 +185,7 @@
 
 ### Task 4 — View and edit a contact
 
-- [ ] Done
+- [x] Done
 - Goal: the user opens a contact's details and edits any field; changes are validated and saved.
 - Builds on: 3
 - Areas: backend · frontend

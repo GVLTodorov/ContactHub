@@ -104,4 +104,60 @@ public class DomainTests
 
         Assert.That(ex.Errors, Does.ContainKey("firstName"));
     }
+
+    private static readonly DateTime Later = Now.AddHours(1);
+
+    [Test]
+    public void Change_WithSameValues_LeavesUpdatedAtUnchanged()
+    {
+        var c = NewContact("Ada", "Lovelace", new DateOnly(1990, 1, 1));
+
+        c.Rename(" Ada ", "Lovelace", Later);
+        c.ChangeDateOfBirth(new DateOnly(1990, 1, 1), Later);
+        c.ChangeAddress(ValidAddress(), Later);
+        c.ChangePhoneNumber(PhoneNumber.Create("+49 30 123456"), Later);
+        c.ChangeIban(Iban.Create(ValidIban), Later);
+
+        Assert.That(c.UpdatedAt, Is.EqualTo(Now));
+    }
+
+    [Test]
+    public void Change_WithNewValues_BumpsUpdatedAt()
+    {
+        var c = NewContact("Ada", "Lovelace", new DateOnly(1990, 1, 1));
+
+        c.Rename("Grace", "Hopper", Later);
+        Assert.That(c.FirstName, Is.EqualTo("Grace"));
+        Assert.That(c.UpdatedAt, Is.EqualTo(Later));
+
+        var later2 = Later.AddHours(1);
+        c.ChangeDateOfBirth(new DateOnly(1985, 5, 5), later2);
+        Assert.That(c.UpdatedAt, Is.EqualTo(later2));
+
+        var later3 = later2.AddHours(1);
+        c.ChangeAddress(Address.Create("Other St 2", "20095", "Hamburg", "Germany"), later3);
+        Assert.That(c.UpdatedAt, Is.EqualTo(later3));
+
+        var later4 = later3.AddHours(1);
+        c.ChangePhoneNumber(PhoneNumber.Create("+4940999999"), later4);
+        Assert.That(c.UpdatedAt, Is.EqualTo(later4));
+
+        var later5 = later4.AddHours(1);
+        c.ChangeIban(Iban.Create("GB82WEST12345698765432"), later5);
+        Assert.That(c.UpdatedAt, Is.EqualTo(later5));
+        Assert.That(c.CreatedAt, Is.EqualTo(Now));
+    }
+
+    [Test]
+    public void Change_InvalidValue_ThrowsAndKeepsStateAndUpdatedAt()
+    {
+        var c = NewContact("Ada", "Lovelace", new DateOnly(1990, 1, 1));
+
+        Assert.That(() => c.Rename(" ", "Lovelace", Later), Throws.TypeOf<DomainValidationException>());
+        Assert.That(() => c.ChangeDateOfBirth(new DateOnly(2030, 1, 1), Later), Throws.TypeOf<DomainValidationException>());
+
+        Assert.That(c.FirstName, Is.EqualTo("Ada"));
+        Assert.That(c.DateOfBirth, Is.EqualTo(new DateOnly(1990, 1, 1)));
+        Assert.That(c.UpdatedAt, Is.EqualTo(Now));
+    }
 }

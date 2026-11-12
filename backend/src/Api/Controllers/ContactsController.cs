@@ -20,6 +20,28 @@ public class ContactsController : ControllerBase
         return Created($"/api/contacts/{contact.Id}", contact);
     }
 
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType<ContactDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ContactDto> GetById(
+        Guid id,
+        [FromServices] IQueryHandler<GetContactByIdQuery, ContactDto> handler,
+        CancellationToken cancellationToken) =>
+        await handler.HandleAsync(new GetContactByIdQuery(id), cancellationToken);
+
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType<ContactDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ContactDto> Update(
+        Guid id,
+        CreateContactCommand body,
+        [FromServices] ICommandHandler<UpdateContactCommand, ContactDto> handler,
+        CancellationToken cancellationToken) =>
+        await handler.HandleAsync(
+            new UpdateContactCommand(id, body.FirstName, body.Surname, body.DateOfBirth, body.Address, body.PhoneNumber, body.Iban),
+            cancellationToken);
+
     [HttpGet]
     [ProducesResponseType<IReadOnlyList<ContactDto>>(StatusCodes.Status200OK)]
     public async Task<IReadOnlyList<ContactDto>> List(

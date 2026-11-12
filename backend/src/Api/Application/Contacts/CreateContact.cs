@@ -25,9 +25,12 @@ public class CreateAddressValidator : AbstractValidator<CreateAddress>
     }
 }
 
-public class CreateContactCommandValidator : AbstractValidator<CreateContactCommand>
+public class CreateContactCommandValidator(TimeProvider timeProvider)
+    : ContactCommandValidator<CreateContactCommand>(timeProvider);
+
+public abstract class ContactCommandValidator<T> : AbstractValidator<T> where T : CreateContactCommand
 {
-    public CreateContactCommandValidator(TimeProvider timeProvider)
+    protected ContactCommandValidator(TimeProvider timeProvider)
     {
         RuleFor(c => c.FirstName).NotEmpty().MaximumLength(Contact.MaxNameLength);
         RuleFor(c => c.Surname).NotEmpty().MaximumLength(Contact.MaxNameLength);

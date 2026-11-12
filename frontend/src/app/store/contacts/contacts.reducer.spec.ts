@@ -55,4 +55,36 @@ describe('contacts reducer', () => {
     expect(s.saveStatus).toBe('idle');
     expect(s.fieldErrors).toEqual({});
   });
+
+  it('tracks the detail load, upserting the contact', () => {
+    let s = reducer(initialState, ContactsPageActions.detailOpened({ id: '1' }));
+    expect(s.detailStatus).toBe('loading');
+    s = reducer(s, ContactsApiActions.loadOneSuccess({ contact: make('1', 'A', 'B') }));
+    expect(s.detailStatus).toBe('success');
+    expect(s.ids).toEqual(['1']);
+    s = reducer(s, ContactsApiActions.loadOneSuccess({ contact: make('1', 'Z', 'B') }));
+    expect(s.ids).toEqual(['1']);
+    expect(s.entities['1']?.firstName).toBe('Z');
+  });
+
+  it('tracks not-found separately from other detail errors', () => {
+    const error = { message: 'nope', fieldErrors: {} };
+    const nf = reducer(initialState, ContactsApiActions.loadOneFailure({ error, notFound: true }));
+    expect(nf.detailStatus).toBe('notFound');
+    expect(nf.detailError).toBeNull();
+    const err = reducer(initialState, ContactsApiActions.loadOneFailure({ error, notFound: false }));
+    expect(err.detailStatus).toBe('error');
+    expect(err.detailError).toBe('nope');
+  });
+
+  it('tracks update lifecycle', () => {
+    let s = reducer(initialState, ContactsPageActions.updateSubmitted({ id: '1', input: {} as ContactInput }));
+    expect(s.saveStatus).toBe('loading');
+    s = reducer(s, ContactsApiActions.updateFailure({ error: { message: 'bad', fieldErrors: { 'address.city': ['x'] } } }));
+    expect(s.saveStatus).toBe('error');
+    expect(s.fieldErrors).toEqual({ 'address.city': ['x'] });
+    s = reducer(s, ContactsApiActions.updateSuccess({ contact: make('1', 'A', 'B') }));
+    expect(s.saveStatus).toBe('success');
+    expect(s.ids).toEqual(['1']);
+  });
 });

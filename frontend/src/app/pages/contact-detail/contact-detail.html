@@ -1,0 +1,66 @@
+<section class="flex flex-col gap-4 py-4">
+  @if (status() === 'notFound') {
+    <div class="flex flex-col items-start gap-2" role="alert">
+      <h1 class="text-2xl font-bold">Contact not found</h1>
+      <p>This contact does not exist or was removed.</p>
+      <p-button label="Back to list" icon="pi pi-arrow-left" routerLink="/contacts" />
+    </div>
+  } @else if (status() === 'error' && !contact()) {
+    <div class="flex flex-col items-start gap-2" role="alert">
+      <p-message severity="error">{{ error() ?? 'Could not load the contact.' }}</p-message>
+      <div class="flex gap-2">
+        <p-button label="Retry" icon="pi pi-refresh" severity="secondary" (onClick)="retry()" />
+        <p-button label="Back to list" routerLink="/contacts" [outlined]="true" />
+      </div>
+    </div>
+  } @else if (!contact()) {
+    <div class="flex flex-col gap-2" role="status" aria-label="Loading contact">
+      <p-skeleton height="2rem" width="16rem" />
+      <p-skeleton height="12rem" />
+    </div>
+  } @else {
+    @let c = contact()!;
+    <p-card [header]="c.firstName + ' ' + c.surname">
+      <dl class="grid gap-4 sm:grid-cols-2">
+        <div>
+          <dt class="text-sm text-surface-500">First name</dt>
+          <dd>{{ c.firstName }}</dd>
+        </div>
+        <div>
+          <dt class="text-sm text-surface-500">Surname</dt>
+          <dd>{{ c.surname }}</dd>
+        </div>
+        <div>
+          <dt class="text-sm text-surface-500">Date of birth</dt>
+          <dd>{{ c.dateOfBirth | date: 'mediumDate' }} (age {{ age() }})</dd>
+        </div>
+        <div>
+          <dt class="text-sm text-surface-500">Phone number</dt>
+          <dd>{{ c.phoneNumber }}</dd>
+        </div>
+        <div class="sm:col-span-2">
+          <dt class="text-sm text-surface-500">IBAN</dt>
+          <dd>{{ c.ibanFormatted }}</dd>
+        </div>
+        <div class="sm:col-span-2">
+          <dt class="text-sm text-surface-500">Address</dt>
+          <dd>{{ c.address.street }}, {{ c.address.postalCode }} {{ c.address.city }}, {{ c.address.country }}</dd>
+        </div>
+        <div>
+          <dt class="text-sm text-surface-500">Created</dt>
+          <dd>{{ c.createdAt | date: 'medium' }}</dd>
+        </div>
+        <div>
+          <dt class="text-sm text-surface-500">Updated</dt>
+          <dd>{{ c.updatedAt | date: 'medium' }}</dd>
+        </div>
+      </dl>
+      <ng-template #footer>
+        <div class="flex gap-2">
+          <p-button label="Edit" icon="pi pi-pencil" [routerLink]="['/contacts', c.id, 'edit']" />
+          <p-button label="Back to list" severity="secondary" [outlined]="true" routerLink="/contacts" />
+        </div>
+      </ng-template>
+    </p-card>
+  }
+</section>

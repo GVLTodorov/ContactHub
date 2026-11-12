@@ -91,4 +91,81 @@ public class ContactsEndpointTests
             .ToList();
         Assert.That(names, Is.EqualTo(new[] { "Alice", "bob", "Zed" }));
     }
+
+    private async Task<Guid> CreateAsync(string first, string last)
+    {
+        var response = await _client.PostAsJsonAsync("/api/contacts", Body(first, last));
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        return json.GetProperty("id").GetGuid();
+    }
+
+    [Test]
+    public async Task GetById_Existing_Returns200()
+    {
+        var id = await CreateAsync("Ada", "Lovelace");
+
+        var response = await _client.GetAsync($"/api/contacts/{id}");
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.That(json.GetProperty("id").GetGuid(), Is.EqualTo(id));
+        Assert.That(json.GetProperty("dateOfBirth").GetString(), Is.EqualTo("1990-04-12"));
+        Assert.That(json.GetProperty("ibanFormatted").GetString(), Is.EqualTo("DE89 3704 0044 0532 0130 00"));
+        Assert.That(json.GetProperty("address").GetProperty("street").GetString(), Is.EqualTo("Main St 1"));
+    }
+
+    [Test]
+    public async Task GetById_Unknown_Returns404ProblemDetails()
+    {
+        var response = await _client.GetAsync($"/api/contacts/{Guid.NewGuid()}");
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.That(json.GetProperty("status").GetInt32(), Is.EqualTo(404));
+    }
+
+    [Test]
+    public async Task Put_Valid_Returns200WithUpdatedContact()
+    {
+        var id = await CreateAsync("Ada", "Lovelace");
+
+        var response = await _client.PutAsJsonAsync($"/api/contacts/{id}", Body("Grace", "Hopper"));
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.That(json.GetProperty("id").GetGuid(), Is.EqualTo(id));
+        Assert.That(json.GetProperty("firstName").GetString(), Is.EqualTo("Grace"));
+        var fetched = await _client.GetFromJsonAsync<JsonElement>($"/api/contacts/{id}");
+        Assert.That(fetched.GetProperty("surname").GetString(), Is.EqualTo("Hopper"));
+    }
+
+    [Test]
+    public async Task Put_Invalid_Returns400WithCamelCaseNestedKeys()
+    {
+        var id = await CreateAsync("Ada", "Lovelace");
+        var body = new
+        {
+            firstName = "",
+            surname = "Lovelace",
+            dateOfBirth = "1990-04-12",
+            address = new { street = "Main St 1", postalCode = "10115", city = "", country = "Germany" },
+            phoneNumber = "+49 30 123456",
+            iban = "DE89 3704 0044 0532 0130 00",
+        };
+
+        var response = await _client.PutAsJsonAsync($"/api/contacts/{id}", body);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var keys = json.GetProperty("errors").EnumerateObject().Select(p => p.Name).ToList();
+        Assert.That(keys, Is.SupersetOf(new[] { "firstName", "address.city" }));
+    }
+
+    [Test]
+    public async Task Put_Unknown_Returns404()
+    {
+        var response = await _client.PutAsJsonAsync($"/api/contacts/{Guid.NewGuid()}", Body("Ada", "Lovelace"));
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+    }
 }

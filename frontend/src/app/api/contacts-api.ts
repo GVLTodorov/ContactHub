@@ -37,6 +37,7 @@ export interface ProblemDetails {
 export interface ApiError {
   message: string;
   fieldErrors: Record<string, string[]>;
+  status?: number;
 }
 
 /** Converts an HTTP failure (ProblemDetails / ValidationProblem) into a displayable error. */
@@ -49,7 +50,7 @@ export function toApiError(err: unknown): ApiError {
       problem?.detail ||
       problem?.title ||
       (err.status === 0 ? 'The server is not reachable.' : `Request failed (${err.status}).`);
-    return { message, fieldErrors };
+    return { message, fieldErrors, status: err.status };
   }
   return { message: 'Something went wrong.', fieldErrors: {} };
 }
@@ -64,5 +65,13 @@ export class ContactsApi {
 
   create(input: ContactInput): Observable<Contact> {
     return this.http.post<Contact>('/api/contacts', input);
+  }
+
+  get(id: string): Observable<Contact> {
+    return this.http.get<Contact>(`/api/contacts/${encodeURIComponent(id)}`);
+  }
+
+  update(id: string, input: ContactInput): Observable<Contact> {
+    return this.http.put<Contact>(`/api/contacts/${encodeURIComponent(id)}`, input);
   }
 }

@@ -11,7 +11,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { FieldsetModule } from 'primeng/fieldset';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
-import { ContactInput } from '../../api/contacts-api';
+import { Contact, ContactInput } from '../../api/contacts-api';
 import { dateOfBirthValidator, ibanValidator, phoneValidator } from './validators';
 
 export function formatDate(d: Date): string {
@@ -26,6 +26,8 @@ export function formatDate(d: Date): string {
 })
 export class ContactForm {
   readonly saving = input(false);
+  /** Existing contact used to prefill the form. */
+  readonly initial = input<Contact | null>(null);
   /** Server validation errors keyed like `firstName` or `address.city`. */
   readonly serverErrors = input<Record<string, string[]>>({});
   readonly submitted = output<ContactInput>();
@@ -84,6 +86,19 @@ export class ContactForm {
   );
 
   constructor() {
+    effect(() => {
+      const c = this.initial();
+      if (!c) return;
+      const [y, m, d] = c.dateOfBirth.split('-').map(Number);
+      this.form.reset({
+        firstName: c.firstName,
+        surname: c.surname,
+        dateOfBirth: new Date(y, m - 1, d),
+        phoneNumber: c.phoneNumber,
+        iban: c.iban,
+        address: { ...c.address },
+      });
+    });
     effect(() => {
       const errors = this.serverErrors();
       for (const [key, messages] of Object.entries(errors)) {

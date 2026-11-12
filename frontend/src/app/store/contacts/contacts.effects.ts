@@ -37,6 +37,49 @@ export class ContactsEffects {
     ),
   );
 
+  readonly loadOne$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(ContactsPageActions.detailOpened),
+      switchMap(({ id }) =>
+        this.api.get(id).pipe(
+          map((contact) => ContactsApiActions.loadOneSuccess({ contact })),
+          catchError((e) => {
+            const error = toApiError(e);
+            return of(ContactsApiActions.loadOneFailure({ error, notFound: error.status === 404 }));
+          }),
+        ),
+      ),
+    ),
+  );
+
+  readonly update$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(ContactsPageActions.updateSubmitted),
+      exhaustMap(({ id, input }) =>
+        this.api.update(id, input).pipe(
+          map((contact) => ContactsApiActions.updateSuccess({ contact })),
+          catchError((e) => of(ContactsApiActions.updateFailure({ error: toApiError(e) }))),
+        ),
+      ),
+    ),
+  );
+
+  readonly updateSuccess$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(ContactsApiActions.updateSuccess),
+        tap(({ contact }) => {
+          this.messages.add({
+            severity: 'success',
+            summary: 'Contact updated',
+            detail: `${contact.firstName} ${contact.surname} was saved.`,
+          });
+          void this.router.navigate(['/contacts', contact.id]);
+        }),
+      ),
+    { dispatch: false },
+  );
+
   readonly createSuccessNavigate$ = createEffect(
     () =>
       this.actions$.pipe(
