@@ -3,13 +3,13 @@
 ## Stack
 
 - .NET SDK 10 (`global.json`), nullable C#; Node 24 (`.nvmrc`)
-- `backend/`: ASP.NET Core Web API with controllers (no Minimal APIs), `src/Api/`, NUnit in `tests/Api.Tests/`, one solution file
+- `backend/`: ASP.NET Core Web API with controllers (no Minimal APIs), `Api/`, NUnit in `Api.Tests/`, one solution file
 - `frontend/`: tested with Vitest
 - `Dockerfile`, `compose.yml`, `.github/`: Docker Compose, GitHub Actions
 
 ## Commands
 
-- From `backend/`: dev `dotnet run --project src/Api` · lint `dotnet format --verify-no-changes`
+- From `backend/`: dev `dotnet run --project Api` · lint `dotnet format --verify-no-changes`
   · test `dotnet test` · build `dotnet build`
 - Whole stack: `docker compose up --build`
 
@@ -27,12 +27,12 @@
 ## Database
 
 - Database: SQLite via EF Core (`Microsoft.EntityFrameworkCore.Sqlite`, `UseSqlite`)
-- Data code: entities and `AppDbContext` in `src/Api/Data/`. SQLite can't sort `DateTimeOffset`
+- Data code: entities and `AppDbContext` in `Api/Data/`. SQLite can't sort `DateTimeOffset`
   or `decimal`: use UTC `DateTime` and integer cents
-- Schema changes, from `backend/`: `dotnet ef migrations add <Change> --project src/Api` (first
+- Schema changes, from `backend/`: `dotnet ef migrations add <Change> --project Api` (first
   time `dotnet tool restore`). The app applies them at startup with `Database.Migrate()`
 - Database file: `database/contacthub.db` inside the running app's folder, e.g.
-  `backend/src/Api/bin/Debug/net10.0/database/contacthub.db`, created on first run. A relative
+  `backend/Api/bin/Debug/net10.0/database/contacthub.db`, created on first run. A relative
   `Data Source` is resolved against `AppContext.BaseDirectory`, never the working directory or
   content root; startup creates the file's folder before `Database.Migrate()`. `*.db*` files are
   gitignored

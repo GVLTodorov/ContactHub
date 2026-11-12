@@ -31,9 +31,9 @@ start the stack, check results, app changes you need.
 
 The one time you edit `backend/` and `.vscode/`, only as below.
 
-1. **Swagger + "Client" button.** No `UseSwaggerUI` in `backend/src/Api/` → add
+1. **Swagger + "Client" button.** No `UseSwaggerUI` in `backend/Api/` → add
    `Swashbuckle.AspNetCore` (only `Swashbuckle.AspNetCore.SwaggerUI` on `/openapi/v1.json` if the
-   app uses `MapOpenApi`). Serve `/swagger` in every environment. `src/Api/Swagger/SwaggerTopBar.cs`:
+   app uses `MapOpenApi`). Serve `/swagger` in every environment. `Api/Swagger/SwaggerTopBar.cs`:
    `AddTopBarLinks(options, config)`, called in `UseSwaggerUI`, appends (`+=`) a `<style>` and
    `<script>` to `options.HeadContent`. The script gets a `JsonSerializer` list of `[label, url]`
    pairs (now `["Client", ClientUrl]`), waits for `.topbar-wrapper`, inserts
@@ -54,7 +54,7 @@ The one time you edit `backend/` and `.vscode/`, only as below.
 4. **VS Code F5.** `.vscode/launch.json`, `tasks.json`, `extensions.json`. One visible compound
    `Backend + Frontend` (`stopAll: true`) over two hidden configs:
    - `Backend`: `coreclr`, `preLaunchTask` `backend: build`, program
-     `backend/src/Api/bin/Debug/net<global.json major.minor>/<csproj name>.dll`, env
+     `backend/Api/bin/Debug/net<global.json major.minor>/<csproj name>.dll`, env
      `ASPNETCORE_ENVIRONMENT=Development`, `ASPNETCORE_URLS=http://127.0.0.1:8080`,
      `serverReadyAction` `openExternally` on `Now listening on: (https?://\\S+)`, `uriFormat`
      `%s/swagger`.

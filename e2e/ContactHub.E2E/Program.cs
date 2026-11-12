@@ -30,7 +30,7 @@ internal static class Program
             {
                 var backend = StartProcess(
                     "dotnet",
-                    ["run", "--project", Path.Combine("backend", "src", "Api")],
+                    ["run", "--project", Path.Combine("backend", "Api")],
                     root,
                     new Dictionary<string, string> { ["ConnectionStrings__Default"] = "Data Source=database/contacthub_e2e.db" });
                 started.Add(backend);
@@ -146,7 +146,7 @@ internal static class Program
 
     private static void DeleteE2EDatabase(string root)
     {
-        var dir = Path.Combine(root, "backend", "src", "Api", "bin", "Debug", "net10.0", "database");
+        var dir = Path.Combine(root, "backend", "Api", "bin", "Debug", "net10.0", "database");
         foreach (var suffix in new[] { "", "-shm", "-wal" })
         {
             var file = Path.Combine(dir, $"contacthub_e2e.db{suffix}");

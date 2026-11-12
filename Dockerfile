@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS backend-build
 WORKDIR /src
 COPY backend/ ./
-RUN dotnet publish src/Api -c Release -o /out --nologo -v q
+RUN dotnet publish Api -c Release -o /out --nologo -v q
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS backend
 WORKDIR /app

@@ -18,7 +18,7 @@ needed for Compose.
 
 | What | Command | Result |
 | --- | --- | --- |
-| Backend | `cd backend && dotnet run --project src/Api` | API on http://127.0.0.1:8080, Swagger UI at http://127.0.0.1:8080/swagger |
+| Backend | `cd backend && dotnet run --project Api` | API on http://127.0.0.1:8080, Swagger UI at http://127.0.0.1:8080/swagger |
 | Frontend | `cd frontend && npm install && npm run start` | App on http://127.0.0.1:4700; `/api` is proxied to the backend (`frontend/proxy.conf.js`) |
 | Whole stack | `docker compose up --build` | Backend on port 8080, frontend dev server on port 4700 |
 | Backend tests | `cd backend && dotnet test` | NUnit: domain unit tests and endpoint tests through `WebApplicationFactory` |
@@ -29,7 +29,7 @@ needed for Compose.
 **Where the data lives.** The connection string is `Data Source=database/contacthub.db`. A
 relative path is resolved against the running app's folder (`AppContext.BaseDirectory`), not the
 working directory. Locally the file is
-`backend/src/Api/bin/Debug/net10.0/database/contacthub.db`. Startup creates the folder and runs
+`backend/Api/bin/Debug/net10.0/database/contacthub.db`. Startup creates the folder and runs
 `Database.Migrate()`, so the database is created on first run. Tests use `contacthub_test.db` in
 the test project's output folder, and the e2e run uses `contacthub_e2e.db`, which is deleted
 before each run. In Docker Compose the backend mounts the named volume `dbdata` on
@@ -43,7 +43,7 @@ it to GHCR on `main`.
 
 ### Backend: one project, four layers
 
-`backend/src/Api/` is one ASP.NET Core project, split into folders:
+`backend/Api/` is one ASP.NET Core project, split into folders:
 
 - **Domain/**: the `Contact` aggregate and the value objects `Address`, `PhoneNumber` and `Iban`.
   Setters are private. `Contact.Create(...)` is the factory, and the behaviour methods `Rename`,
@@ -125,16 +125,16 @@ flowchart LR
 
 | Requirement | Where |
 | --- | --- |
-| Data persisted | `backend/src/Api/Startup.cs` (SQLite path, `Database.Migrate()`), `compose.yml` (`dbdata` volume) |
-| EF Core | `backend/src/Api/Data/AppDbContext.cs`, `backend/src/Api/Data/ContactConfiguration.cs`, `backend/src/Api/Migrations/` |
-| FluentValidation (models) | `backend/src/Api/Application/Contacts/CreateContact.cs`, `backend/src/Api/Application/Contacts/UpdateContact.cs`, `backend/src/Api/Application/ValidationCommandHandlerDecorator.cs` |
-| FluentValidation (entities) | `backend/src/Api/Domain/Contact.cs` (`ContactValidator`), `backend/src/Api/Domain/Address.cs` (`AddressValidator`) |
-| CQRS | `backend/src/Api/Application/Abstractions.cs`, `backend/src/Api/Application/ApplicationServiceCollectionExtensions.cs`, `backend/src/Api/Application/Contacts/`, `backend/src/Api/Controllers/ContactsController.cs` |
-| Rich Domain Model | `backend/src/Api/Domain/Contact.cs`, `backend/src/Api/Domain/Address.cs`, `backend/src/Api/Domain/PhoneNumber.cs`, `backend/src/Api/Domain/Iban.cs`, `backend/src/Api/Domain/DomainValidationException.cs` |
+| Data persisted | `backend/Api/Startup.cs` (SQLite path, `Database.Migrate()`), `compose.yml` (`dbdata` volume) |
+| EF Core | `backend/Api/Data/AppDbContext.cs`, `backend/Api/Data/ContactConfiguration.cs`, `backend/Api/Migrations/` |
+| FluentValidation (models) | `backend/Api/Application/Contacts/CreateContact.cs`, `backend/Api/Application/Contacts/UpdateContact.cs`, `backend/Api/Application/ValidationCommandHandlerDecorator.cs` |
+| FluentValidation (entities) | `backend/Api/Domain/Contact.cs` (`ContactValidator`), `backend/Api/Domain/Address.cs` (`AddressValidator`) |
+| CQRS | `backend/Api/Application/Abstractions.cs`, `backend/Api/Application/ApplicationServiceCollectionExtensions.cs`, `backend/Api/Application/Contacts/`, `backend/Api/Controllers/ContactsController.cs` |
+| Rich Domain Model | `backend/Api/Domain/Contact.cs`, `backend/Api/Domain/Address.cs`, `backend/Api/Domain/PhoneNumber.cs`, `backend/Api/Domain/Iban.cs`, `backend/Api/Domain/DomainValidationException.cs` |
 | ngrx Store | `frontend/src/app/store/contacts/`, `frontend/src/app/app.config.ts`, `frontend/src/app/api/contacts-api.ts` |
 | PrimeNG components | `frontend/src/app/app.config.ts` (`providePrimeNG`, Aura), `frontend/src/app/pages/contacts/contacts.html` (Table, ConfirmDialog), `frontend/src/app/components/contact-form/contact-form.html` (InputText, DatePicker, Fieldset), `frontend/src/app/components/layout/layout.html` |
 | Playwright e2e test | `e2e/ContactHub.E2E/` (.NET console app, `Program.Main`), `e2e` job in `.github/workflows/ci.yml` |
-| Tests | `backend/tests/Api.Tests/DomainTests.cs`, `backend/tests/Api.Tests/ContactsEndpointTests.cs`, `*.spec.ts` next to the frontend code |
+| Tests | `backend/Api.Tests/DomainTests.cs`, `backend/Api.Tests/ContactsEndpointTests.cs`, `*.spec.ts` next to the frontend code |
 
 ## Contact list features
 
