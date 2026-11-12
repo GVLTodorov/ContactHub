@@ -106,7 +106,7 @@
 
 ### Task 2 — Build the app shell with PrimeNG
 
-- [ ] Done
+- [x] Done
 - Goal: the user opens the app and sees a branded layout with navigation, a home page and a
   not-found page, styled with PrimeNG.
 - Builds on: 1

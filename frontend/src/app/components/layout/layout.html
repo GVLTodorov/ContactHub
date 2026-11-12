@@ -1,0 +1,37 @@
+<p-toast />
+<div class="flex min-h-screen flex-col">
+  <p-toolbar>
+    <ng-template #start>
+      <a routerLink="/" class="text-xl font-semibold">ContactHub</a>
+    </ng-template>
+    <ng-template #end>
+      <nav aria-label="Main">
+        <a
+          routerLink="/"
+          routerLinkActive="font-bold underline"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="px-3 py-2"
+          >Home</a
+        >
+      </nav>
+    </ng-template>
+  </p-toolbar>
+
+  <main class="mx-auto w-full max-w-5xl flex-1 p-4">
+    <router-outlet />
+  </main>
+
+  <footer class="flex items-center justify-end gap-2 p-4">
+    @switch (status()) {
+      @case ('loading') {
+        <p-tag severity="secondary" value="API checking…" role="status" />
+      }
+      @case ('online') {
+        <p-tag severity="success" value="API online" role="status" />
+      }
+      @default {
+        <p-tag severity="danger" value="API offline" role="status" />
+      }
+    }
+  </footer>
+</div>
