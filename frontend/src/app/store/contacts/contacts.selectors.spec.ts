@@ -1,5 +1,5 @@
 import { Contact } from '../../api/contacts-api';
-import { ContactsApiActions } from './contacts.actions';
+import { ContactsApiActions, ContactsPageActions } from './contacts.actions';
 import { contactsFeature, initialState } from './contacts.reducer';
 
 describe('contacts selectors', () => {
@@ -40,5 +40,48 @@ describe('contacts selectors', () => {
 
   it('selects detail status', () => {
     expect(contactsFeature.selectDetailStatus(appState(null))).toBe('idle');
+  });
+
+  describe('selectFilteredContacts', () => {
+    const make = (id: string, firstName: string, surname: string, phone: string, iban: string, city: string) =>
+      ({
+        id,
+        firstName,
+        surname,
+        phoneNumber: phone,
+        iban,
+        ibanFormatted: iban.replace(/(.{4})/g, '$1 ').trim(),
+        address: { street: '', postalCode: '', city, country: '' },
+      }) as Contact;
+    const a = make('1', 'Alice', 'Smith', '+4911111', 'DE89370400440532013000', 'Berlin');
+    const b = make('2', 'Bob', 'Jones', '+3322222', 'FR1420041010050500013M02606', 'Paris');
+    const stateWith = (query: string) => {
+      const contacts = contactsFeature.reducer(
+        contactsFeature.reducer(initialState, ContactsApiActions.loadSuccess({ contacts: [a, b] })),
+        ContactsPageActions.searchChanged({ query }),
+      );
+      return { contacts };
+    };
+    const ids = (q: string) => contactsFeature.selectFilteredContacts(stateWith(q)).map((c) => c.id);
+
+    it('returns everything for an empty query', () => {
+      expect(ids('')).toHaveLength(2);
+      expect(ids('   ')).toHaveLength(2);
+    });
+    it('matches first name, surname, phone, city', () => {
+      expect(ids('alic')).toEqual(['1']);
+      expect(ids('jones')).toEqual(['2']);
+      expect(ids('+33')).toEqual(['2']);
+      expect(ids('berl')).toEqual(['1']);
+    });
+    it('matches raw and formatted IBAN ignoring spaces and case', () => {
+      expect(ids('de8937')).toEqual(['1']);
+      expect(ids('de89 3704 0044')).toEqual(['1']);
+      expect(ids('fr14')).toEqual(['2']);
+    });
+    it('is case-insensitive and returns nothing when no match', () => {
+      expect(ids('PARIS')).toEqual(['2']);
+      expect(ids('zzz')).toEqual([]);
+    });
   });
 });

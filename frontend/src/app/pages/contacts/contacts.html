@@ -1,5 +1,5 @@
 <section class="flex flex-col gap-4 py-4">
-  <div class="flex items-center justify-between">
+  <div class="flex flex-wrap items-center justify-between gap-2">
     <h1 class="text-2xl font-bold">Contacts</h1>
     <p-button label="New contact" icon="pi pi-plus" routerLink="/contacts/new" />
   </div>
@@ -9,7 +9,7 @@
       <p-message severity="error">{{ error() ?? 'Could not load contacts.' }}</p-message>
       <p-button label="Retry" icon="pi pi-refresh" severity="secondary" (onClick)="retry()" />
     </div>
-  } @else if (loadStatus() === 'idle' || (loadStatus() === 'loading' && contacts().length === 0)) {
+  } @else if (loadStatus() === 'idle' || (loadStatus() === 'loading' && allContacts().length === 0)) {
     <div class="flex flex-col gap-2" role="status" aria-label="Loading contacts">
       @for (row of skeletonRows; track row) {
         <p-skeleton height="2.5rem" />
@@ -21,40 +21,86 @@
       <p-button label="Create your first contact" routerLink="/contacts/new" />
     </div>
   } @else {
-    <p-table [value]="contacts()" [tableStyle]="{ 'min-width': '40rem' }">
-      <ng-template #header>
-        <tr>
-          <th>Name</th>
-          <th>Date of birth</th>
-          <th>Phone</th>
-          <th>IBAN</th>
-          <th>City</th>
-          <th><span class="sr-only">Actions</span></th>
-        </tr>
-      </ng-template>
-      <ng-template #body let-c>
-        <tr>
-          <td>
-            <a [routerLink]="['/contacts', c.id]" class="text-primary font-medium hover:underline">
-              {{ c.firstName }} {{ c.surname }}
-            </a>
-          </td>
-          <td>{{ c.dateOfBirth | date: 'mediumDate' }}</td>
-          <td>{{ c.phoneNumber }}</td>
-          <td>{{ c.ibanFormatted }}</td>
-          <td>{{ c.address.city }}</td>
-          <td>
-            <p-button
-              icon="pi pi-trash"
-              severity="danger"
-              [text]="true"
-              [attr.aria-label]="'Delete ' + c.firstName + ' ' + c.surname"
-              (onClick)="confirmDelete(c)"
-            />
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
+    <div class="flex flex-col gap-1">
+      <label for="contact-search" class="text-sm">Search contacts</label>
+      <div class="flex gap-2">
+        <input
+          pInputText
+          id="contact-search"
+          type="search"
+          class="w-full"
+          placeholder="Name, phone, IBAN or city"
+          autocomplete="off"
+          [value]="query()"
+          (input)="search($any($event.target).value)"
+        />
+        @if (query()) {
+          <p-button label="Clear" icon="pi pi-times" severity="secondary" [outlined]="true" (onClick)="clearSearch()" />
+        }
+      </div>
+    </div>
+
+    @if (noMatches()) {
+      <div class="flex flex-col items-center gap-3 py-12" role="status">
+        <p class="text-lg">No matches for "{{ query() }}"</p>
+        <p-button label="Clear search" icon="pi pi-times" severity="secondary" (onClick)="clearSearch()" />
+      </div>
+    } @else {
+      <p-table
+        [value]="contacts()"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        [sortField]="'surname'"
+        styleClass="contacts-table"
+      >
+        <ng-template #header>
+          <tr class="max-md:hidden">
+            <th pSortableColumn="surname">Name <p-sort-icon field="surname" /></th>
+            <th pSortableColumn="dateOfBirth">Date of birth <p-sort-icon field="dateOfBirth" /></th>
+            <th pSortableColumn="phoneNumber">Phone <p-sort-icon field="phoneNumber" /></th>
+            <th pSortableColumn="iban">IBAN <p-sort-icon field="iban" /></th>
+            <th pSortableColumn="address.city">City <p-sort-icon field="address.city" /></th>
+            <th><span class="sr-only">Actions</span></th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-c>
+          <tr class="max-md:block max-md:border-b max-md:border-surface max-md:py-2">
+            <td class="max-md:flex max-md:justify-between max-md:gap-4 max-md:border-0!">
+              <span class="font-semibold md:hidden">Name</span>
+              <a [routerLink]="['/contacts', c.id]" class="text-primary font-medium hover:underline">
+                {{ c.firstName }} {{ c.surname }}
+              </a>
+            </td>
+            <td class="max-md:flex max-md:justify-between max-md:gap-4 max-md:border-0!">
+              <span class="font-semibold md:hidden">Date of birth</span>
+              {{ c.dateOfBirth | date: 'mediumDate' }}
+            </td>
+            <td class="max-md:flex max-md:justify-between max-md:gap-4 max-md:border-0!">
+              <span class="font-semibold md:hidden">Phone</span>
+              {{ c.phoneNumber }}
+            </td>
+            <td class="max-md:flex max-md:justify-between max-md:gap-4 max-md:border-0!">
+              <span class="font-semibold md:hidden">IBAN</span>
+              <span class="break-all text-right">{{ c.ibanFormatted }}</span>
+            </td>
+            <td class="max-md:flex max-md:justify-between max-md:gap-4 max-md:border-0!">
+              <span class="font-semibold md:hidden">City</span>
+              {{ c.address.city }}
+            </td>
+            <td class="max-md:flex max-md:justify-end max-md:border-0!">
+              <p-button
+                icon="pi pi-trash"
+                severity="danger"
+                [text]="true"
+                [attr.aria-label]="'Delete ' + c.firstName + ' ' + c.surname"
+                (onClick)="confirmDelete(c)"
+              />
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
   }
   <p-confirmdialog />
 </section>

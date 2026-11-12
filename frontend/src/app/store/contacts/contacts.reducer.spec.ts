@@ -18,6 +18,14 @@ const make = (id: string, firstName: string, surname: string): Contact => ({
 describe('contacts reducer', () => {
   const reducer = contactsFeature.reducer;
 
+  it('stores the search query and keeps it across loads', () => {
+    let s = reducer(initialState, ContactsPageActions.searchChanged({ query: 'bob' }));
+    expect(s.query).toBe('bob');
+    s = reducer(s, ContactsPageActions.opened());
+    s = reducer(s, ContactsApiActions.loadSuccess({ contacts: [] }));
+    expect(s.query).toBe('bob');
+  });
+
   it('sets loading on open', () => {
     const s = reducer(initialState, ContactsPageActions.opened());
     expect(s.loadStatus).toBe('loading');

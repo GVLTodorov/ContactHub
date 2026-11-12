@@ -255,7 +255,7 @@
 
 ### Task 7 — Polish the list and document the project
 
-- [ ] Done
+- [x] Done
 - Goal: the user searches, sorts and pages the contact list and the app works on a phone; a
   reviewer finds every requirement explained in the README.
 - Builds on: 5, 6

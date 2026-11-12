@@ -6,6 +6,7 @@ export const ContactsPageActions = createActionGroup({
   events: {
     Opened: emptyProps(),
     Retry: emptyProps(),
+    'Search Changed': props<{ query: string }>(),
     'Form Opened': emptyProps(),
     'Create Submitted': props<{ input: ContactInput }>(),
     'Detail Opened': props<{ id: string }>(),

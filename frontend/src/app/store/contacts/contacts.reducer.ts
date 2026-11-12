@@ -18,7 +18,19 @@ export interface ContactsState extends EntityState<Contact> {
   saveStatus: Status;
   error: string | null;
   fieldErrors: Record<string, string[]>;
+  /** Search term; kept in the store so it survives navigation. */
+  query: string;
 }
+
+const normalize = (v: string): string => v.toLowerCase().replace(/\s+/g, '');
+
+export const matchesQuery = (c: Contact, query: string): boolean => {
+  const q = normalize(query);
+  if (!q) return true;
+  return [c.firstName, c.surname, c.firstName + c.surname, c.phoneNumber, c.iban, c.ibanFormatted, c.address.city].some(
+    (f) => normalize(f ?? '').includes(q),
+  );
+};
 
 export const adapter: EntityAdapter<Contact> = createEntityAdapter<Contact>({
   sortComparer: (a, b) =>
@@ -33,6 +45,7 @@ export const initialState: ContactsState = adapter.getInitialState({
   saveStatus: 'idle',
   error: null,
   fieldErrors: {},
+  query: '',
 });
 
 export const contactsFeature = createFeature({
@@ -44,6 +57,7 @@ export const contactsFeature = createFeature({
       loadStatus: 'loading' as const,
       error: null,
     })),
+    on(ContactsPageActions.searchChanged, (state, { query }) => ({ ...state, query })),
     on(ContactsApiActions.loadSuccess, (state, { contacts }) =>
       adapter.setAll(contacts, { ...state, loadStatus: 'success' as const, error: null }),
     ),
@@ -103,10 +117,13 @@ export const contactsFeature = createFeature({
     })),
     on(ContactsApiActions.deleteContactSuccess, (state, { id }) => adapter.removeOne(id, state)),
   ),
-  extraSelectors: ({ selectContactsState, selectLoadStatus, selectEntities }) => {
+  extraSelectors: ({ selectContactsState, selectLoadStatus, selectEntities, selectQuery }) => {
     const selectAllContacts = createSelector(selectContactsState, adapter.getSelectors().selectAll);
     return {
       selectAllContacts,
+      selectFilteredContacts: createSelector(selectAllContacts, selectQuery, (contacts, query) =>
+        query.trim() ? contacts.filter((c) => matchesQuery(c, query)) : contacts,
+      ),
       selectSelectedContact: createSelector(
         selectRouteParam('id'),
         selectEntities,
