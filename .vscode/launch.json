@@ -1,0 +1,42 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Backend",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "backend: build",
+      "program": "${workspaceFolder}/backend/src/Api/bin/Debug/net10.0/Api.dll",
+      "cwd": "${workspaceFolder}/backend/src/Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://127.0.0.1:8080"
+      },
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "Now listening on: (https?://\\S+)",
+        "uriFormat": "%s/swagger"
+      },
+      "presentation": { "hidden": true }
+    },
+    {
+      "name": "Frontend",
+      "type": "node",
+      "request": "launch",
+      "preLaunchTask": "frontend: install",
+      "program": "${workspaceFolder}/frontend/node_modules/@angular/cli/bin/ng.js",
+      "args": ["serve", "--host", "127.0.0.1"],
+      "cwd": "${workspaceFolder}/frontend",
+      "outputCapture": "std",
+      "killBehavior": "forceful",
+      "presentation": { "hidden": true }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Backend + Frontend",
+      "configurations": ["Backend", "Frontend"],
+      "stopAll": true
+    }
+  ]
+}

@@ -1,8 +1,11 @@
 using Api.Application;
 using Api.Controllers;
 using Api.Data;
+using Api.Swagger;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi;
 
 namespace Api;
@@ -40,14 +43,32 @@ public class Startup(IConfiguration configuration)
         app.UseExceptionHandler();
         app.UseStatusCodePages();
 
-        if (env.IsDevelopment())
+        app.UseSwagger();
+        app.UseSwaggerUI(o =>
         {
-            app.UseSwagger();
-            app.UseSwaggerUI(o => o.SwaggerEndpoint("/swagger/v1/swagger.json", "ContactHub API v1"));
+            o.SwaggerEndpoint("/swagger/v1/swagger.json", "ContactHub API v1");
+            SwaggerTopBar.AddTopBarLinks(o, Configuration);
+        });
+
+        var staticDir = Configuration["StaticDir"];
+        PhysicalFileProvider? files = null;
+        if (!string.IsNullOrEmpty(staticDir) && Directory.Exists(staticDir))
+        {
+            files = new PhysicalFileProvider(Path.GetFullPath(staticDir));
+            app.UseDefaultFiles(new DefaultFilesOptions { FileProvider = files });
+            app.UseStaticFiles(new StaticFileOptions { FileProvider = files });
         }
 
         app.UseRouting();
         app.UseAuthorization();
-        app.UseEndpoints(endpoints => endpoints.MapControllers());
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+            if (files is not null)
+            {
+                endpoints.MapFallbackToFile("{*path:regex(^(?!api(/|$)|swagger(/|$)).*$)}", "index.html", new StaticFileOptions { FileProvider = files })
+                    .Add(b => b.Metadata.Add(new HttpMethodMetadata(["GET"])));
+            }
+        });
     }
 }

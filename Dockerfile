@@ -22,3 +22,10 @@ RUN npm ci --loglevel=error
 COPY --chown=node:node frontend/ ./
 EXPOSE 4200
 CMD ["npx", "ng", "serve", "--host", "0.0.0.0"]
+
+FROM frontend AS frontend-build
+RUN npm run build
+
+FROM backend AS app
+ENV StaticDir=/app/public
+COPY --from=frontend-build /app/dist/frontend/browser /app/public

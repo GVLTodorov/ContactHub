@@ -26,6 +26,14 @@ public class HealthEndpointTests
     }
 
     [Test]
+    public async Task SwaggerUi_HasClientButton()
+    {
+        var html = await _client.GetStringAsync("/swagger/index.html");
+
+        Assert.That(html, Does.Contain("topbar-links").And.Contain("Client"));
+    }
+
+    [Test]
     public async Task Get_ReturnsOkStatus()
     {
         var response = await _client.GetAsync("/api/health");

@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "backend: build",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["build", "-nodeReuse:false", "-p:UseSharedCompilation=false"],
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      "label": "frontend: install",
+      "type": "shell",
+      "command": "npm ci --loglevel=error",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "problemMatcher": []
+    }
+  ]
+}
