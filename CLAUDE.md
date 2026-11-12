@@ -31,11 +31,15 @@
   or `decimal`: use UTC `DateTime` and integer cents
 - Schema changes, from `backend/`: `dotnet ef migrations add <Change> --project src/Api` (first
   time `dotnet tool restore`). The app applies them at startup with `Database.Migrate()`
-- Local `ConnectionStrings:Default`: `Data Source=app.db`; `*.db*` files are gitignored
-- Tests: `Data Source=app_test.db` in `appsettings.Testing.json`; one `[OneTimeSetUp]` deletes the
-  file before the factory starts, startup recreates it
+- Database file: `database/contacthub.db` in the repo root, created on first run. A relative
+  `Data Source` is resolved against `ContentRootPath` (`backend/src/Api/`), never the working
+  directory; startup creates the file's folder before `Database.Migrate()`. `database/` and
+  `*.db*` files are gitignored
+- Local `ConnectionStrings:Default`: `Data Source=../../../database/contacthub.db`
+- Tests: `Data Source=../../../database/contacthub_test.db` in `appsettings.Testing.json`; one
+  `[OneTimeSetUp]` deletes the file before the factory starts, startup recreates it
 - Compose: no `db` service; backend mounts a named volume on `/app/data`, uses
-  `Data Source=/app/data/app.db`
+  `Data Source=/app/data/contacthub.db`
 - Image: final stage creates `/app/data` owned by `app`
 - CI: no database service
 
