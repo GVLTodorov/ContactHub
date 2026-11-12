@@ -65,6 +65,6 @@ The one time you edit `backend/` and `.vscode/`, only as below.
      section's.
 
 Verify: lint and tests in `backend/`; `docker build -t app .`, run it against the compose `db`
-(SQLite: a volume on `/app/data`) with `StaticDir=/app/public`, curl `/api/health`, `/` (HTML) and
+(SQLite: a volume on `/app/database`) with `StaticDir=/app/public`, curl `/api/health`, `/` (HTML) and
 `/swagger/index.html`, then stop it; `dotnet build` must produce the `program` dll. Report the
 image name.

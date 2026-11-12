@@ -98,7 +98,7 @@
     angular-eslint, `/api` proxy to `http://127.0.0.1:8080`, Vitest)
   - `appsettings.Development.json`, `appsettings.Testing.json` and `src/environments/` committed
     with working local values
-  - `Dockerfile`, `.dockerignore`, `compose.yml` (backend with a named volume on `/app/data`,
+  - `Dockerfile`, `.dockerignore`, `compose.yml` (backend with a named volume on `/app/database`,
     frontend dev server); `docker compose up --build` serves `/api/health`
   - `.github/workflows/ci.yml` with a backend job and a frontend job
   - one NUnit test for `GET /api/health`, one Vitest test for the root component
