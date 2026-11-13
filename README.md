@@ -1,4 +1,4 @@
-# ContactHub
+# <img src="frontend/public/favicon.svg" alt="" width="40" align="top"> ContactHub
 
 A small, single-user contact manager built as an interview task
 ([requirements](docs/requirements.md), [design plan](docs/plan.md)): an ASP.NET Core (.NET 10) Web
