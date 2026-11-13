@@ -1,6 +1,14 @@
-using Api.Application;
+using Api.Application.Abstractions;
 using Api.Application.Contacts;
-using Api.Domain;
+using Api.Application.Contacts.Commands.CreateContact;
+using Api.Application.Contacts.Commands.DeleteContact;
+using Api.Application.Contacts.Commands.UpdateContact;
+using Api.Application.Contacts.Queries.GetContactById;
+using Api.Application.Contacts.Queries.GetContacts;
+using Api.Application.Exceptions;
+using Api.Domain.Entities;
+using Api.Domain.Exceptions;
+using Api.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Tests;
@@ -20,7 +28,7 @@ public class HandlerTests
     private async Task<ContactDto> CreateAsync(CreateContactCommand command)
     {
         await using var db = _database.CreateContext();
-        var handler = new CreateContactCommandHandler(db, _time);
+        var handler = new CreateContactHandler(db, _time);
         var created = await handler.HandleAsync(command, CancellationToken.None);
 
         return created;
@@ -57,7 +65,7 @@ public class HandlerTests
         var created = await CreateAsync(Commands.ValidCreate());
 
         await using var db = _database.CreateContext();
-        var handler = new GetContactByIdQueryHandler(db);
+        var handler = new GetContactByIdHandler(db);
         var found = await handler.HandleAsync(new GetContactByIdQuery(created.Id), CancellationToken.None);
 
         Assert.That(found, Is.EqualTo(created));
@@ -68,7 +76,7 @@ public class HandlerTests
     public async Task GetById_Missing_ThrowsNotFound()
     {
         await using var db = _database.CreateContext();
-        var handler = new GetContactByIdQueryHandler(db);
+        var handler = new GetContactByIdHandler(db);
 
         var ex = Assert.ThrowsAsync<NotFoundException>(() => handler.HandleAsync(new GetContactByIdQuery(Guid.NewGuid()), CancellationToken.None))!;
 
@@ -84,8 +92,8 @@ public class HandlerTests
         await CreateAsync(Commands.ValidCreate("Alice", "Baker"));
 
         await using var db = _database.CreateContext();
-        var handler = new ListContactsQueryHandler(db);
-        var list = await handler.HandleAsync(new ListContactsQuery(), CancellationToken.None);
+        var handler = new GetContactsHandler(db);
+        var list = await handler.HandleAsync(new GetContactsQuery(), CancellationToken.None);
 
         Assert.That(list.Select(c => c.FirstName), Is.EqualTo(new[] { "bob", "Zed", "Alice" }));
     }
@@ -94,8 +102,8 @@ public class HandlerTests
     public async Task List_Empty_ReturnsEmpty()
     {
         await using var db = _database.CreateContext();
-        var handler = new ListContactsQueryHandler(db);
-        var list = await handler.HandleAsync(new ListContactsQuery(), CancellationToken.None);
+        var handler = new GetContactsHandler(db);
+        var list = await handler.HandleAsync(new GetContactsQuery(), CancellationToken.None);
 
         Assert.That(list, Is.Empty);
     }
@@ -107,7 +115,7 @@ public class HandlerTests
         var later = new FixedTimeProvider(FixedTimeProvider.DefaultNow.AddDays(1));
 
         await using var db = _database.CreateContext();
-        var handler = new UpdateContactCommandHandler(db, later);
+        var handler = new UpdateContactHandler(db, later);
         var updated = await handler.HandleAsync(Commands.ValidUpdate(created.Id), CancellationToken.None);
 
         Assert.That(updated.FirstName, Is.EqualTo("Grace"));
@@ -121,7 +129,7 @@ public class HandlerTests
     public async Task Update_Missing_ThrowsNotFound()
     {
         await using var db = _database.CreateContext();
-        var handler = new UpdateContactCommandHandler(db, _time);
+        var handler = new UpdateContactHandler(db, _time);
 
         Assert.ThrowsAsync<NotFoundException>(() => handler.HandleAsync(Commands.ValidUpdate(Guid.NewGuid()), CancellationToken.None));
         await Task.CompletedTask;
@@ -134,7 +142,7 @@ public class HandlerTests
 
         await using (var db = _database.CreateContext())
         {
-            var handler = new DeleteContactCommandHandler(db);
+            var handler = new DeleteContactHandler(db);
             var result = await handler.HandleAsync(new DeleteContactCommand(created.Id), CancellationToken.None);
 
             Assert.That(result, Is.EqualTo(default(Unit)));
@@ -150,7 +158,7 @@ public class HandlerTests
     public async Task Delete_Missing_ThrowsNotFound()
     {
         await using var db = _database.CreateContext();
-        var handler = new DeleteContactCommandHandler(db);
+        var handler = new DeleteContactHandler(db);
 
         Assert.ThrowsAsync<NotFoundException>(() => handler.HandleAsync(new DeleteContactCommand(Guid.NewGuid()), CancellationToken.None));
         await Task.CompletedTask;

@@ -1,4 +1,4 @@
-using Api.Swagger;
+using Api.Extensions;
 using Microsoft.Extensions.Configuration;
 using Swashbuckle.AspNetCore.SwaggerUI;
 

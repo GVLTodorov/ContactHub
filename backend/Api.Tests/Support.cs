@@ -1,5 +1,10 @@
 using Api.Application.Contacts;
-using Api.Data;
+using Api.Application.Contacts.Commands.CreateContact;
+using Api.Application.Contacts.Commands.DeleteContact;
+using Api.Application.Contacts.Commands.UpdateContact;
+using Api.Application.Contacts.Queries.GetContactById;
+using Api.Application.Contacts.Queries.GetContacts;
+using Api.Infrastructure.Persistence;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 

@@ -94,26 +94,53 @@ Swagger and the SPA on port 8080). It sets `SeedDemoData=true`, `healthCheckPath
 
 `backend/Api/` is one ASP.NET Core project, split into folders:
 
+```text
+backend/Api/
+├── Controllers/        ContactsController, HealthController
+├── Middleware/         ValidationExceptionHandler, NotFoundExceptionHandler
+├── Extensions/         SwaggerTopBar
+├── Program.cs, Startup.cs, appsettings*.json
+├── Application/
+│   ├── Contacts/
+│   │   ├── ContactDto.cs
+│   │   ├── Commands/   CreateContact/, UpdateContact/, DeleteContact/   (Command, Validator, Handler)
+│   │   └── Queries/    GetContactById/, GetContacts/                     (Query, Handler)
+│   ├── Abstractions/   ICommand, IQuery, ICommandHandler, IQueryHandler, Unit
+│   ├── Behaviors/      ValidationCommandHandlerDecorator
+│   ├── Exceptions/     NotFoundException
+│   └── DependencyInjection.cs   AddApplication()
+├── Domain/
+│   ├── Entities/       Contact (+ ContactValidator)
+│   ├── ValueObjects/   Address, PhoneNumber, Iban
+│   └── Exceptions/     DomainValidationException, ValidationKeys
+└── Infrastructure/
+    ├── Persistence/    AppDbContext, DemoDataSeeder, Configurations/, Migrations/
+    └── DependencyInjection.cs   AddInfrastructure()
+```
+
+Namespaces follow the folders (`Api.Application.Contacts.Commands.CreateContact`, `Api.Domain.Entities`, ...).
+
 - **Domain/**: the `Contact` aggregate and the value objects `Address`, `PhoneNumber` and `Iban`.
   Setters are private. `Contact.Create(...)` is the factory, and the behaviour methods `Rename`,
   `ChangeDateOfBirth`, `ChangeAddress`, `ChangePhoneNumber` and `ChangeIban` re-check the
   invariants and bump `UpdatedAt` only when a value actually changes. Ids are `Guid` v7, and the
   clock comes from an injected `TimeProvider`.
 - **Application/**: CQRS without MediatR. `ICommand<T>`, `IQuery<T>`, `ICommandHandler<,>` and
-  `IQueryHandler<,>` live in `Abstractions.cs`. There is one file per use case in
-  `Application/Contacts/`, holding the command or query, its request validator and its handler.
-  Queries read with `AsNoTracking`.
-- **Data/**: `AppDbContext` and `ContactConfiguration`. `Address` is an EF complex property,
-  `PhoneNumber` and `Iban` are stored through value converters, and `DateOfBirth` is a `DateOnly`.
-  Migrations are in `Migrations/`.
-- **Controllers/**: thin `[ApiController]` classes. Each action takes the handler via
-  `[FromServices]`, dispatches the command or query, and maps the result to an HTTP status. Two
-  `IExceptionHandler`s map validation errors to `400 ValidationProblem` and `NotFoundException` to
-  `404 ProblemDetails`.
+  `IQueryHandler<,>` live in `Abstractions/`. Each use case has its own folder under
+  `Application/Contacts/Commands/` or `Queries/`, with one file each for the command or query, its
+  request validator and its handler. Queries read with `AsNoTracking`.
+- **Infrastructure/**: `Persistence/` holds `AppDbContext`, `Configurations/ContactConfiguration`
+  and `Migrations/`. `Address` is an EF complex property, `PhoneNumber` and `Iban` are stored
+  through value converters, and `DateOfBirth` is a `DateOnly`.
+- **Controllers/** and **Middleware/**: thin `[ApiController]` classes. Each action takes the
+  handler via `[FromServices]`, dispatches the command or query, and maps the result to an HTTP
+  status. Two `IExceptionHandler`s in `Middleware/` map validation errors to
+  `400 ValidationProblem` and `NotFoundException` to `404 ProblemDetails`.
 
 Hosting uses the classic `Program` + `Startup` model. `Startup.ConfigureServices` calls
 `AddApplication()`, which scans the assembly, registers every handler, and wraps each command
-handler in `ValidationCommandHandlerDecorator`.
+handler in `ValidationCommandHandlerDecorator`, and `AddInfrastructure(configuration)`, which
+registers the SQLite `AppDbContext`.
 
 ```mermaid
 flowchart LR
@@ -129,8 +156,8 @@ flowchart LR
 
 ### Validation layers
 
-1. **Request (Application):** FluentValidation validators such as `CreateContactCommandValidator`
-   and `UpdateContactCommandValidator`, run by the decorator before the handler. They reuse the
+1. **Request (Application):** FluentValidation validators such as `CreateContactValidator`
+   and `UpdateContactValidator`, run by the decorator before the handler. They reuse the
    domain rules (`PhoneNumber.IsValid`, `Iban.IsValid`, the length constants on the entity).
 2. **Entity (Domain):** `ContactValidator` (an `AbstractValidator<Contact>`) runs inside
    `Contact.Create` and every behaviour method. It checks name lengths and that the date of birth
@@ -174,12 +201,12 @@ flowchart LR
 
 | Requirement | Where |
 | --- | --- |
-| Data persisted | `backend/Api/Startup.cs` (SQLite path, `Database.Migrate()`), `compose.yml` (`dbdata` volume) |
-| EF Core | `backend/Api/Data/AppDbContext.cs`, `backend/Api/Data/ContactConfiguration.cs`, `backend/Api/Migrations/` |
-| FluentValidation (models) | `backend/Api/Application/Contacts/CreateContact.cs`, `backend/Api/Application/Contacts/UpdateContact.cs`, `backend/Api/Application/ValidationCommandHandlerDecorator.cs` |
-| FluentValidation (entities) | `backend/Api/Domain/Contact.cs` (`ContactValidator`), `backend/Api/Domain/Address.cs` (`AddressValidator`) |
-| CQRS | `backend/Api/Application/Abstractions.cs`, `backend/Api/Application/ApplicationServiceCollectionExtensions.cs`, `backend/Api/Application/Contacts/`, `backend/Api/Controllers/ContactsController.cs` |
-| Rich Domain Model | `backend/Api/Domain/Contact.cs`, `backend/Api/Domain/Address.cs`, `backend/Api/Domain/PhoneNumber.cs`, `backend/Api/Domain/Iban.cs`, `backend/Api/Domain/DomainValidationException.cs` |
+| Data persisted | `backend/Api/Infrastructure/DependencyInjection.cs` (SQLite path), `backend/Api/Startup.cs` (`Database.Migrate()`), `compose.yml` (`dbdata` volume) |
+| EF Core | `backend/Api/Infrastructure/Persistence/AppDbContext.cs`, `backend/Api/Infrastructure/Persistence/Configurations/ContactConfiguration.cs`, `backend/Api/Infrastructure/Persistence/Migrations/` |
+| FluentValidation (models) | `backend/Api/Application/Contacts/Commands/CreateContact/CreateContactValidator.cs`, `backend/Api/Application/Contacts/Commands/UpdateContact/UpdateContactValidator.cs`, `backend/Api/Application/Behaviors/ValidationCommandHandlerDecorator.cs` |
+| FluentValidation (entities) | `backend/Api/Domain/Entities/Contact.cs` (`ContactValidator`), `backend/Api/Domain/ValueObjects/Address.cs` (`AddressValidator`) |
+| CQRS | `backend/Api/Application/Abstractions/`, `backend/Api/Application/DependencyInjection.cs`, `backend/Api/Application/Contacts/`, `backend/Api/Controllers/ContactsController.cs` |
+| Rich Domain Model | `backend/Api/Domain/Entities/Contact.cs`, `backend/Api/Domain/ValueObjects/Address.cs`, `backend/Api/Domain/ValueObjects/PhoneNumber.cs`, `backend/Api/Domain/ValueObjects/Iban.cs`, `backend/Api/Domain/Exceptions/DomainValidationException.cs` |
 | ngrx Store | `frontend/src/app/store/contacts/`, `frontend/src/app/app.config.ts`, `frontend/src/app/api/contacts-api.ts` |
 | PrimeNG components | `frontend/src/app/app.config.ts` (`providePrimeNG`, Aura), `frontend/src/app/pages/contacts/contacts.html` (Table, ConfirmDialog), `frontend/src/app/components/contact-form/contact-form.html` (InputText, DatePicker, Fieldset), `frontend/src/app/components/layout/layout.html` |
 | Playwright e2e test | `e2e/ContactHub.E2E/` (.NET console app, `Program.Main`), `e2e` job in `.github/workflows/ci.yml` |

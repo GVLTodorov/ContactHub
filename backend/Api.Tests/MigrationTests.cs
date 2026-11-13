@@ -1,5 +1,7 @@
-using Api.Data;
-using Api.Domain;
+using Api.Domain.Entities;
+using Api.Domain.Exceptions;
+using Api.Domain.ValueObjects;
+using Api.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;

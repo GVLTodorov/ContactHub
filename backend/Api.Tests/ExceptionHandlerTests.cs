@@ -1,7 +1,11 @@
 using System.Text.Json;
-using Api.Application;
+using Api.Application.Abstractions;
+using Api.Application.Exceptions;
 using Api.Controllers;
-using Api.Domain;
+using Api.Domain.Entities;
+using Api.Domain.Exceptions;
+using Api.Domain.ValueObjects;
+using Api.Middleware;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Http;

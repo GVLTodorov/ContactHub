@@ -1,4 +1,4 @@
-using Api.Domain;
+using Api.Domain.Entities;
 
 namespace Api.Application.Contacts;
 

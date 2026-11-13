@@ -1,9 +1,9 @@
 using Api.Application;
-using Api.Controllers;
-using Api.Data;
-using Api.Swagger;
+using Api.Extensions;
+using Api.Infrastructure;
+using Api.Infrastructure.Persistence;
+using Api.Middleware;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi;
@@ -22,15 +22,9 @@ public class Startup(IConfiguration configuration)
         services.AddExceptionHandler<NotFoundExceptionHandler>();
         services.AddSingleton(TimeProvider.System);
         services.AddApplication();
+        services.AddInfrastructure(Configuration);
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(o => o.SwaggerDoc("v1", new OpenApiInfo { Title = "ContactHub API", Version = "v1" }));
-
-        var connectionString = new SqliteConnectionStringBuilder(
-            Configuration.GetConnectionString("Default") ?? "Data Source=database/contacthub.db");
-        connectionString.DataSource = Path.GetFullPath(connectionString.DataSource, AppContext.BaseDirectory);
-        Directory.CreateDirectory(Path.GetDirectoryName(connectionString.DataSource)!);
-
-        services.AddDbContext<AppDbContext>(o => o.UseSqlite(connectionString.ToString()));
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

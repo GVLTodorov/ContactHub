@@ -1,6 +1,14 @@
 using Api.Application;
+using Api.Application.Abstractions;
+using Api.Application.Behaviors;
 using Api.Application.Contacts;
-using Api.Data;
+using Api.Application.Contacts.Commands.CreateContact;
+using Api.Application.Contacts.Commands.DeleteContact;
+using Api.Application.Contacts.Commands.UpdateContact;
+using Api.Application.Contacts.Queries.GetContactById;
+using Api.Application.Contacts.Queries.GetContacts;
+using Api.Application.Exceptions;
+using Api.Infrastructure.Persistence;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -51,11 +59,11 @@ public class ApplicationWiringTests
     {
         using var scope = _provider.CreateScope();
 
-        var list = scope.ServiceProvider.GetRequiredService<IQueryHandler<ListContactsQuery, IReadOnlyList<ContactDto>>>();
+        var list = scope.ServiceProvider.GetRequiredService<IQueryHandler<GetContactsQuery, IReadOnlyList<ContactDto>>>();
         var get = scope.ServiceProvider.GetRequiredService<IQueryHandler<GetContactByIdQuery, ContactDto>>();
 
-        Assert.That(list, Is.TypeOf<ListContactsQueryHandler>());
-        Assert.That(get, Is.TypeOf<GetContactByIdQueryHandler>());
+        Assert.That(list, Is.TypeOf<GetContactsHandler>());
+        Assert.That(get, Is.TypeOf<GetContactByIdHandler>());
     }
 
     [Test]
@@ -66,7 +74,7 @@ public class ApplicationWiringTests
         var validators = scope.ServiceProvider.GetServices<IValidator<CreateContactCommand>>().ToList();
 
         Assert.That(validators, Has.Count.EqualTo(1));
-        Assert.That(validators[0], Is.TypeOf<CreateContactCommandValidator>());
+        Assert.That(validators[0], Is.TypeOf<CreateContactValidator>());
     }
 
     [Test]

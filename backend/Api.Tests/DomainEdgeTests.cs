@@ -1,4 +1,6 @@
-using Api.Domain;
+using Api.Domain.Entities;
+using Api.Domain.Exceptions;
+using Api.Domain.ValueObjects;
 
 namespace Api.Tests;
 

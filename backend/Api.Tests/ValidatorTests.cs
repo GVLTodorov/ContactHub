@@ -1,4 +1,9 @@
 using Api.Application.Contacts;
+using Api.Application.Contacts.Commands.CreateContact;
+using Api.Application.Contacts.Commands.DeleteContact;
+using Api.Application.Contacts.Commands.UpdateContact;
+using Api.Application.Contacts.Queries.GetContactById;
+using Api.Application.Contacts.Queries.GetContacts;
 using FluentValidation.Results;
 
 namespace Api.Tests;
@@ -6,7 +11,7 @@ namespace Api.Tests;
 [TestFixture]
 public class ValidatorTests
 {
-    private readonly CreateContactCommandValidator _create = new(new FixedTimeProvider());
+    private readonly CreateContactValidator _create = new(new FixedTimeProvider());
 
     private static string[] Keys(ValidationResult result) => result.Errors.Select(e => e.PropertyName).Distinct().ToArray();
 
@@ -21,7 +26,7 @@ public class ValidatorTests
     [Test]
     public void UpdateValidator_ValidCommand_Passes()
     {
-        var validator = new UpdateContactCommandValidator(new FixedTimeProvider());
+        var validator = new UpdateContactValidator(new FixedTimeProvider());
 
         var result = validator.Validate(Commands.ValidUpdate(Guid.NewGuid()));
 

@@ -27,7 +27,7 @@
 ## Database
 
 - Database: SQLite via EF Core (`Microsoft.EntityFrameworkCore.Sqlite`, `UseSqlite`)
-- Data code: entities and `AppDbContext` in `Api/Data/`. SQLite can't sort `DateTimeOffset`
+- Data code: entities in `Api/Domain/`, `AppDbContext` and migrations in `Api/Infrastructure/Persistence/`. SQLite can't sort `DateTimeOffset`
   or `decimal`: use UTC `DateTime` and integer cents
 - Schema changes, from `backend/`: `dotnet ef migrations add <Change> --project Api` (first
   time `dotnet tool restore`). The app applies them at startup with `Database.Migrate()`
@@ -53,7 +53,7 @@
   result is fine.
 
   ```csharp
-  var contacts = await handler.HandleAsync(new ListContactsQuery(), cancellationToken);
+  var contacts = await handler.HandleAsync(new GetContactsQuery(), cancellationToken);
 
   return contacts;
   ```
