@@ -3,16 +3,16 @@
 ## Stack
 
 - .NET SDK 10 (`global.json`), nullable C#; Node 24 (`.nvmrc`)
-- `backend/`: ASP.NET Core Web API with controllers (no Minimal APIs), NUnit in `Api.Tests/`, one solution file
+- `backend/`: ASP.NET Core Web API with controllers (no Minimal APIs), NUnit in `ContactHub.Api.Tests/`, one solution file
 - Clean Architecture: `ContactHub.Domain` ← `ContactHub.Application` ← `ContactHub.Infrastructure`;
-  `Api/` is the web host (controllers, `Program.cs`, config). Application uses `IAppDbContext`, never
-  Infrastructure. `Api.Tests/ArchitectureTests.cs` enforces the references
+  `ContactHub.Api/` is the web host (controllers, `Program.cs`, config). Application uses `IAppDbContext`, never
+  Infrastructure. `ContactHub.Api.Tests/ArchitectureTests.cs` enforces the references
 - `frontend/`: tested with Vitest
 - `Dockerfile`, `compose.yml`, `.github/`: Docker Compose, GitHub Actions
 
 ## Commands
 
-- From `backend/`: dev `dotnet run --project Api` · lint `dotnet format --verify-no-changes`
+- From `backend/`: dev `dotnet run --project ContactHub.Api` · lint `dotnet format --verify-no-changes`
   · test `dotnet test` · build `dotnet build`
 - Whole stack: `docker compose up --build`
 
@@ -34,9 +34,9 @@
   `ContactHub.Infrastructure/Persistence/`. SQLite can't sort `DateTimeOffset`
   or `decimal`: use UTC `DateTime` and integer cents
 - Schema changes, from `backend/`: `dotnet ef migrations add <Change> --project
-  ContactHub.Infrastructure --startup-project Api` (first time `dotnet tool restore`). The app applies them at startup with `Database.Migrate()`
+  ContactHub.Infrastructure --startup-project ContactHub.Api` (first time `dotnet tool restore`). The app applies them at startup with `Database.Migrate()`
 - Database file: `database/contacthub.db` inside the running app's folder, e.g.
-  `backend/Api/bin/Debug/net10.0/database/contacthub.db`, created on first run. A relative
+  `backend/ContactHub.Api/bin/Debug/net10.0/database/contacthub.db`, created on first run. A relative
   `Data Source` is resolved against `AppContext.BaseDirectory`, never the working directory or
   content root; startup creates the file's folder before `Database.Migrate()`. `*.db*` files are
   gitignored

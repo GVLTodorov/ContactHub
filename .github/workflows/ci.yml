@@ -24,14 +24,14 @@ jobs:
       - run: dotnet restore
       - run: dotnet format --verify-no-changes
       - run: dotnet build --no-restore
-      - name: Unit tests (coverlet.msbuild writes Api.Tests/coverage.cobertura.xml)
-        run: dotnet test Api.Tests --no-build
+      - name: Unit tests (coverlet.msbuild writes ContactHub.Api.Tests/coverage.cobertura.xml)
+        run: dotnet test ContactHub.Api.Tests --no-build
       - name: Integration tests
-        run: dotnet test Api.Integration.Tests --no-build --collect "XPlat Code Coverage" --results-directory "$GITHUB_WORKSPACE/backend-coverage"
+        run: dotnet test ContactHub.Api.Integration.Tests --no-build --collect "XPlat Code Coverage" --results-directory "$GITHUB_WORKSPACE/backend-coverage"
       - name: Collect coverage reports
         run: |
           mkdir -p "$GITHUB_WORKSPACE/backend-coverage/unit"
-          cp Api.Tests/coverage.cobertura.xml "$GITHUB_WORKSPACE/backend-coverage/unit/"
+          cp ContactHub.Api.Tests/coverage.cobertura.xml "$GITHUB_WORKSPACE/backend-coverage/unit/"
       - uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
@@ -169,7 +169,7 @@ jobs:
           frontend=$(find frontend-coverage -name 'cobertura-coverage.xml' | sort | paste -sd ';')
           echo "backend reports: $backend"
           echo "frontend reports: $frontend"
-          reportgenerator "-reports:$backend" "-targetdir:rg/backend" "-reporttypes:Badges" "-assemblyfilters:+Api;+ContactHub.Domain;+ContactHub.Application;+ContactHub.Infrastructure"
+          reportgenerator "-reports:$backend" "-targetdir:rg/backend" "-reporttypes:Badges" "-assemblyfilters:+ContactHub.*"
           reportgenerator "-reports:$frontend" "-targetdir:rg/frontend" "-reporttypes:Badges"
           for app in backend frontend; do
             cp "rg/$app/badge_linecoverage.svg" "badges/coverage/$app/line.svg"

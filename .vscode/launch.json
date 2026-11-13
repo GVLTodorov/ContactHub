@@ -6,8 +6,8 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "backend: build",
-      "program": "${workspaceFolder}/backend/Api/bin/Debug/net10.0/Api.dll",
-      "cwd": "${workspaceFolder}/backend/Api",
+      "program": "${workspaceFolder}/backend/ContactHub.Api/bin/Debug/net10.0/ContactHub.Api.dll",
+      "cwd": "${workspaceFolder}/backend/ContactHub.Api",
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_URLS": "http://127.0.0.1:8080"

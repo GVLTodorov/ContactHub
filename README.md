@@ -45,10 +45,10 @@ needed for Compose.
 
 | What | Command | Result |
 | --- | --- | --- |
-| Backend | `cd backend && dotnet run --project Api` | API on http://127.0.0.1:8080, Swagger UI at http://127.0.0.1:8080/swagger (its green **Client** button opens the app) |
+| Backend | `cd backend && dotnet run --project ContactHub.Api` | API on http://127.0.0.1:8080, Swagger UI at http://127.0.0.1:8080/swagger (its green **Client** button opens the app) |
 | Frontend | `cd frontend && npm install && npm run start` | App on http://127.0.0.1:4700; `/api` is proxied to the backend (`frontend/proxy.conf.js`) |
 | Whole stack | `docker compose up --build` | Backend on port 8080, frontend dev server on port 4700 |
-| Backend tests | `cd backend && dotnet test` | NUnit. `Api.Tests`: unit tests, fails below 95% line or branch coverage (coverlet). `Api.Integration.Tests`: the API in memory through `WebApplicationFactory` |
+| Backend tests | `cd backend && dotnet test` | NUnit. `ContactHub.Api.Tests`: unit tests, fails below 95% line or branch coverage (coverlet). `ContactHub.Api.Integration.Tests`: the API in memory through `WebApplicationFactory` |
 | Frontend tests | `cd frontend && npm test -- --watch=false` | Vitest: reducer, selectors, effects, API service, validators, components. `npm run test:coverage` also writes `coverage/frontend/cobertura-coverage.xml` |
 | E2E test | `dotnet run --project e2e/ContactHub.E2E` (from the repo root) | .NET console app using Microsoft.Playwright (Chromium); starts the backend and the dev server itself, exits non-zero on failure (first time: `dotnet run --project e2e/ContactHub.E2E -- install chromium`) |
 | Demo video | `dotnet run --project e2e/ContactHub.Demo` (from the repo root) | Separate Playwright recorder, no assertions: starts the stack with demo contacts and records Swagger's Client button, search, copy, create, edit and delete to `e2e/artifacts/demo/demo.webm` (about 70 s; paced with 1 s steps, visible typing and a click marker) |
@@ -57,7 +57,7 @@ needed for Compose.
 **Where the data lives.** The connection string is `Data Source=database/contacthub.db`. A
 relative path is resolved against the running app's folder (`AppContext.BaseDirectory`), not the
 working directory. Locally the file is
-`backend/Api/bin/Debug/net10.0/database/contacthub.db`. Startup creates the folder and runs
+`backend/ContactHub.Api/bin/Debug/net10.0/database/contacthub.db`. Startup creates the folder and runs
 `Database.Migrate()`, so the database is created on first run. Tests use `contacthub_test.db` in
 the test project's output folder, and the e2e run uses `contacthub_e2e.db`, which is deleted
 before each run. In Docker Compose the backend mounts the named volume `dbdata` on
@@ -72,7 +72,7 @@ build) and e2e jobs. On `main`, once those pass, it then:
 - builds the coverage badges (ReportGenerator) and the demo GIF (`e2e/ContactHub.Demo`, ffmpeg), and
   pushes them to the orphan `badges` branch from a single job.
 
-Backend coverage combines `Api.Tests` (coverlet.msbuild) and `Api.Integration.Tests`
+Backend coverage combines `ContactHub.Api.Tests` (coverlet.msbuild) and `ContactHub.Api.Integration.Tests`
 (`--collect "XPlat Code Coverage"`). Frontend coverage is reported separately
 (`npm run test:coverage`).
 
@@ -90,35 +90,43 @@ Swagger and the SPA on port 8080). It sets `SeedDemoData=true`, `healthCheckPath
 
 ## Architecture
 
-### Backend: one project, four layers
+### Backend: Clean Architecture, four projects
 
-`backend/Api/` is one ASP.NET Core project, split into folders:
+Each layer is its own project, and references point inward only
+(`ContactHub.Api` → `ContactHub.Infrastructure` → `ContactHub.Application` → `ContactHub.Domain`).
+`ContactHub.Api.Tests/ArchitectureTests.cs` (NetArchTest) fails the build if a layer references
+the wrong one.
 
 ```text
-backend/Api/
-├── Controllers/        ContactsController, HealthController
-├── Middleware/         ValidationExceptionHandler, NotFoundExceptionHandler
-├── Extensions/         SwaggerTopBar
-├── Program.cs, Startup.cs, appsettings*.json
-├── Application/
+backend/
+├── ContactHub.Domain/
+│   ├── Entities/       Contact (+ ContactValidator)
+│   ├── ValueObjects/   Address, PhoneNumber, Iban
+│   └── Exceptions/     DomainValidationException, ValidationKeys
+├── ContactHub.Application/
 │   ├── Contacts/
 │   │   ├── ContactDto.cs
 │   │   ├── Commands/   CreateContact/, UpdateContact/, DeleteContact/   (Command, Validator, Handler)
 │   │   └── Queries/    GetContactById/, GetContacts/                     (Query, Handler)
-│   ├── Abstractions/   ICommand, IQuery, ICommandHandler, IQueryHandler, Unit
+│   ├── Abstractions/   ICommand, IQuery, ICommandHandler, IQueryHandler, Unit, IAppDbContext
 │   ├── Behaviors/      ValidationCommandHandlerDecorator
 │   ├── Exceptions/     NotFoundException
 │   └── DependencyInjection.cs   AddApplication()
-├── Domain/
-│   ├── Entities/       Contact (+ ContactValidator)
-│   ├── ValueObjects/   Address, PhoneNumber, Iban
-│   └── Exceptions/     DomainValidationException, ValidationKeys
-└── Infrastructure/
-    ├── Persistence/    AppDbContext, DemoDataSeeder, Configurations/, Migrations/
-    └── DependencyInjection.cs   AddInfrastructure()
+├── ContactHub.Infrastructure/
+│   ├── Persistence/    AppDbContext (: IAppDbContext), DemoDataSeeder, Configurations/, Migrations/
+│   └── DependencyInjection.cs   AddInfrastructure()
+├── ContactHub.Api/     web host
+│   ├── Controllers/    ContactsController, HealthController
+│   ├── Middleware/     ValidationExceptionHandler, NotFoundExceptionHandler
+│   ├── Extensions/     SwaggerTopBar
+│   └── Program.cs, Startup.cs, appsettings*.json
+├── ContactHub.Api.Tests/               unit + architecture tests
+└── ContactHub.Api.Integration.Tests/   HTTP endpoints via WebApplicationFactory
 ```
 
-Namespaces follow the folders (`Api.Application.Contacts.Commands.CreateContact`, `Api.Domain.Entities`, ...).
+Namespaces follow the projects and folders (`ContactHub.Application.Contacts.Commands.CreateContact`,
+`ContactHub.Domain.Entities`, ...). New migrations:
+`dotnet ef migrations add <Change> --project ContactHub.Infrastructure --startup-project ContactHub.Api`.
 
 - **Domain/**: the `Contact` aggregate and the value objects `Address`, `PhoneNumber` and `Iban`.
   Setters are private. `Contact.Create(...)` is the factory, and the behaviour methods `Rename`,
@@ -128,7 +136,8 @@ Namespaces follow the folders (`Api.Application.Contacts.Commands.CreateContact`
 - **Application/**: CQRS without MediatR. `ICommand<T>`, `IQuery<T>`, `ICommandHandler<,>` and
   `IQueryHandler<,>` live in `Abstractions/`. Each use case has its own folder under
   `Application/Contacts/Commands/` or `Queries/`, with one file each for the command or query, its
-  request validator and its handler. Queries read with `AsNoTracking`.
+  request validator and its handler. Handlers use `IAppDbContext`, never Infrastructure. Queries
+  read with `AsNoTracking`.
 - **Infrastructure/**: `Persistence/` holds `AppDbContext`, `Configurations/ContactConfiguration`
   and `Migrations/`. `Address` is an EF complex property, `PhoneNumber` and `Iban` are stored
   through value converters, and `DateOfBirth` is a `DateOnly`.
@@ -138,9 +147,9 @@ Namespaces follow the folders (`Api.Application.Contacts.Commands.CreateContact`
   `400 ValidationProblem` and `NotFoundException` to `404 ProblemDetails`.
 
 Hosting uses the classic `Program` + `Startup` model. `Startup.ConfigureServices` calls
-`AddApplication()`, which scans the assembly, registers every handler, and wraps each command
-handler in `ValidationCommandHandlerDecorator`, and `AddInfrastructure(configuration)`, which
-registers the SQLite `AppDbContext`.
+`AddApplication()`, which scans the Application assembly, registers every handler, and wraps each
+command handler in `ValidationCommandHandlerDecorator`, and `AddInfrastructure(configuration)`,
+which registers the SQLite `AppDbContext` and exposes it as `IAppDbContext`.
 
 ```mermaid
 flowchart LR
@@ -201,17 +210,17 @@ flowchart LR
 
 | Requirement | Where |
 | --- | --- |
-| Data persisted | `backend/ContactHub.Infrastructure/DependencyInjection.cs` (SQLite path), `backend/Api/Startup.cs` (`Database.Migrate()`), `compose.yml` (`dbdata` volume) |
+| Data persisted | `backend/ContactHub.Infrastructure/DependencyInjection.cs` (SQLite path), `backend/ContactHub.Api/Startup.cs` (`Database.Migrate()`), `compose.yml` (`dbdata` volume) |
 | EF Core | `backend/ContactHub.Infrastructure/Persistence/AppDbContext.cs`, `backend/ContactHub.Infrastructure/Persistence/Configurations/ContactConfiguration.cs`, `backend/ContactHub.Infrastructure/Persistence/Migrations/` |
 | FluentValidation (models) | `backend/ContactHub.Application/Contacts/Commands/CreateContact/CreateContactValidator.cs`, `backend/ContactHub.Application/Contacts/Commands/UpdateContact/UpdateContactValidator.cs`, `backend/ContactHub.Application/Behaviors/ValidationCommandHandlerDecorator.cs` |
 | FluentValidation (entities) | `backend/ContactHub.Domain/Entities/Contact.cs` (`ContactValidator`), `backend/ContactHub.Domain/ValueObjects/Address.cs` (`AddressValidator`) |
-| CQRS | `backend/ContactHub.Application/Abstractions/`, `backend/ContactHub.Application/DependencyInjection.cs`, `backend/ContactHub.Application/Contacts/`, `backend/Api/Controllers/ContactsController.cs` |
+| CQRS | `backend/ContactHub.Application/Abstractions/`, `backend/ContactHub.Application/DependencyInjection.cs`, `backend/ContactHub.Application/Contacts/`, `backend/ContactHub.Api/Controllers/ContactsController.cs` |
 | Rich Domain Model | `backend/ContactHub.Domain/Entities/Contact.cs`, `backend/ContactHub.Domain/ValueObjects/Address.cs`, `backend/ContactHub.Domain/ValueObjects/PhoneNumber.cs`, `backend/ContactHub.Domain/ValueObjects/Iban.cs`, `backend/ContactHub.Domain/Exceptions/DomainValidationException.cs` |
-| Clean Architecture | `backend/ContactHub.Domain/`, `backend/ContactHub.Application/` (`Abstractions/IAppDbContext.cs`), `backend/ContactHub.Infrastructure/`, `backend/Api/` (web host), `backend/Api.Tests/ArchitectureTests.cs` |
+| Clean Architecture | `backend/ContactHub.Domain/`, `backend/ContactHub.Application/` (`Abstractions/IAppDbContext.cs`), `backend/ContactHub.Infrastructure/`, `backend/ContactHub.Api/` (web host), `backend/ContactHub.Api.Tests/ArchitectureTests.cs` |
 | ngrx Store | `frontend/src/app/store/contacts/`, `frontend/src/app/app.config.ts`, `frontend/src/app/api/contacts-api.ts` |
 | PrimeNG components | `frontend/src/app/app.config.ts` (`providePrimeNG`, Aura), `frontend/src/app/pages/contacts/contacts.html` (Table, ConfirmDialog), `frontend/src/app/components/contact-form/contact-form.html` (InputText, DatePicker, Fieldset), `frontend/src/app/components/layout/layout.html` |
 | Playwright e2e test | `e2e/ContactHub.E2E/` (.NET console app, `Program.Main`), `e2e` job in `.github/workflows/ci.yml` |
-| Tests | `backend/Api.Tests/` (unit, 95% coverage gate), `backend/Api.Integration.Tests/` (HTTP endpoints), `*.spec.ts` next to the frontend code |
+| Tests | `backend/ContactHub.Api.Tests/` (unit, 95% coverage gate), `backend/ContactHub.Api.Integration.Tests/` (HTTP endpoints), `*.spec.ts` next to the frontend code |
 
 ## Contact list features
 

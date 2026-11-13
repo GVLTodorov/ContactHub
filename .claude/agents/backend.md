@@ -7,7 +7,7 @@ model: sonnet
 
 Senior .NET backend engineer. **Edit only `backend/`.**
 
-- Controllers, no Minimal APIs: one `[ApiController]` per resource in `Api/Controllers/`
+- Controllers, no Minimal APIs: one `[ApiController]` per resource in `ContactHub.Api/Controllers/`
   (`[Route("api/<resource>")]`, `AddControllers()` + `MapControllers()`), request/response records
   beside it, camelCase JSON.
 - Validate every body, query and route param; invalid → 400 `ValidationProblem`. All errors are `ProblemDetails`
@@ -20,7 +20,7 @@ Senior .NET backend engineer. **Edit only `backend/`.**
 - No `backend/` yet? Scaffold: `Api/` from `dotnet new webapi --use-controllers` with the Database section's data
   access, OpenAPI + Swagger UI at `/swagger` in Development, `applicationUrl`
   `http://127.0.0.1:8080` in `Properties/launchSettings.json`, `public partial class Program {}`,
-  `GET /api/health`; `Api.Tests/` from `dotnet new nunit` plus
+  `GET /api/health`; `ContactHub.Api.Tests/` from `dotnet new nunit` plus
   `Microsoft.AspNetCore.Mvc.Testing`; one solution file; `dotnet-ef` in
   `.config/dotnet-tools.json` unless the database has no migrations; `Directory.Build.props`
   (`Nullable`, `ImplicitUsings`, `TreatWarningsAsErrors`); `.editorconfig`.

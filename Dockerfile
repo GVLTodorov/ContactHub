@@ -2,7 +2,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS backend-build
 WORKDIR /src
 COPY backend/ ./
-RUN dotnet publish Api -c Release -o /out --nologo -v q
+RUN dotnet publish ContactHub.Api -c Release -o /out --nologo -v q
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS backend
 WORKDIR /app
@@ -11,7 +11,7 @@ RUN mkdir -p /app/database && chown app:app /app/database
 COPY --from=backend-build /out ./
 USER app
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "Api.dll"]
+ENTRYPOINT ["dotnet", "ContactHub.Api.dll"]
 
 FROM node:24-slim AS frontend
 WORKDIR /app

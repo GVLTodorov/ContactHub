@@ -1,13 +1,13 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api", "Api\Api.csproj", "{069F2E55-7BC4-4ED4-A46B-3B977874EB0B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContactHub.Api", "ContactHub.Api\ContactHub.Api.csproj", "{069F2E55-7BC4-4ED4-A46B-3B977874EB0B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api.Tests", "Api.Tests\Api.Tests.csproj", "{73291DE8-4261-491A-A000-F3402A516812}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContactHub.Api.Tests", "ContactHub.Api.Tests\ContactHub.Api.Tests.csproj", "{73291DE8-4261-491A-A000-F3402A516812}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api.Integration.Tests", "Api.Integration.Tests\Api.Integration.Tests.csproj", "{1EFD7D98-6CC3-4472-AF75-C41A6220A215}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContactHub.Api.Integration.Tests", "ContactHub.Api.Integration.Tests\ContactHub.Api.Integration.Tests.csproj", "{1EFD7D98-6CC3-4472-AF75-C41A6220A215}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContactHub.Domain", "ContactHub.Domain\ContactHub.Domain.csproj", "{CAA6DEA5-F4A9-4A07-98FA-17810035CA9F}"
 EndProject

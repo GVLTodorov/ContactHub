@@ -64,7 +64,7 @@ internal sealed class Servers : IDisposable
 
         if (!(reuse && backendUp))
         {
-            var backend = StartProcess("dotnet", ["run", "--project", Path.Combine("backend", "Api")], Root, backendEnv);
+            var backend = StartProcess("dotnet", ["run", "--project", Path.Combine("backend", "ContactHub.Api")], Root, backendEnv);
             started.Add(backend);
             await WaitFor(BackendUrl, TimeSpan.FromMinutes(5), backend);
         }
@@ -100,7 +100,7 @@ internal sealed class Servers : IDisposable
 
     private static void DeleteDatabase(string root, string dbName)
     {
-        var dir = Path.Combine(root, "backend", "Api", "bin", "Debug", "net10.0", "database");
+        var dir = Path.Combine(root, "backend", "ContactHub.Api", "bin", "Debug", "net10.0", "database");
         foreach (var suffix in new[] { "", "-shm", "-wal" })
         {
             var file = Path.Combine(dir, $"{dbName}{suffix}");
