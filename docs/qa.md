@@ -1,6 +1,6 @@
 # QA: requirements checklist
 
-Each requirement from [Requirements.md](Requirements.md), where it is implemented, and how to check
+Each requirement from [requirements.md](requirements.md), where it is implemented, and how to check
 it. Links point to the exact files and lines. All items are **implemented**.
 
 | # | Requirement | Status |

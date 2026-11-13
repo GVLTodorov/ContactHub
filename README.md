@@ -1,7 +1,7 @@
 # ContactHub
 
 A small, single-user contact manager built as an interview task
-([requirements](Docs/Requirements.md), [design plan](Docs/plan.md)): an ASP.NET Core (.NET 10) Web
+([requirements](docs/requirements.md), [design plan](docs/plan.md)): an ASP.NET Core (.NET 10) Web
 API with SQLite and an Angular UI. It is hosted on [Render](https://render.com) and redeploys from
 `main` after CI passes.
 
@@ -52,7 +52,7 @@ tests, Docker Compose and GitHub Actions.
 | Lint | `cd backend && dotnet format --verify-no-changes` · `cd frontend && npm run lint` | |
 
 The local database is created on first run in the app's output folder. See
-[Deployment, CI and data](Docs/deployment.md) for where it lives, the CI pipeline, tests and Render setup.
+[Deployment, CI and data](docs/deployment.md) for where it lives, the CI pipeline, tests and Render setup.
 
 ## Architecture
 
@@ -72,11 +72,11 @@ ContactHub.Api → ContactHub.Infrastructure → ContactHub.Application → Cont
 Architecture tests (NetArchTest) fail the build if a layer references the wrong one. The frontend
 uses an ngrx store (actions → effects → API → reducer → selectors read as signals).
 
-Full details, diagrams and validation rules: [Architecture](Docs/architecture.md).
+Full details, diagrams and validation rules: [Architecture](docs/architecture.md).
 
 ## Requirements to code
 
-A full checklist with line links and how to verify each item: [QA](Docs/QA.md).
+A full checklist with line links and how to verify each item: [QA](docs/qa.md).
 
 | Requirement | Where |
 | --- | --- |
