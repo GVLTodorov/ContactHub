@@ -2,12 +2,13 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using ContactHub.Api.Tests.Common;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 
-namespace ContactHub.Api.Tests;
+namespace ContactHub.Api.Tests.Api;
 
 public abstract class ApiFactoryTestBase
 {

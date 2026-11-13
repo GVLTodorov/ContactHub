@@ -1,8 +1,9 @@
 using System.Diagnostics;
+using ContactHub.Api.Tests.Common;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace ContactHub.Api.Tests;
+namespace ContactHub.Api.Tests.Api;
 
 [TestFixture]
 public class ProgramTests

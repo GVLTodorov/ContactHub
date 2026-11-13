@@ -1,8 +1,10 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using ContactHub.Api.Tests.Api;
+using ContactHub.Api.Tests.Common;
 using ContactHub.Infrastructure.Persistence;
 
-namespace ContactHub.Api.Tests;
+namespace ContactHub.Api.Tests.Infrastructure;
 
 [TestFixture]
 public class DemoDataSeederTests

@@ -1,3 +1,4 @@
+using ContactHub.Api.Tests.Common;
 using ContactHub.Application.Abstractions;
 using ContactHub.Application.Contacts;
 using ContactHub.Application.Contacts.Commands.CreateContact;
@@ -11,7 +12,7 @@ using ContactHub.Domain.Exceptions;
 using ContactHub.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
-namespace ContactHub.Api.Tests;
+namespace ContactHub.Api.Tests.Application;
 
 [TestFixture]
 public class HandlerTests

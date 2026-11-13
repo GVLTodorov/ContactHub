@@ -8,7 +8,7 @@ using ContactHub.Infrastructure.Persistence;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
-namespace ContactHub.Api.Tests;
+namespace ContactHub.Api.Tests.Common;
 
 public sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider
 {

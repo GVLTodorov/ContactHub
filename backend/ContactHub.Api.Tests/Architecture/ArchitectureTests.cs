@@ -3,7 +3,7 @@ using ContactHub.Domain.Entities;
 using ContactHub.Infrastructure.Persistence;
 using NetArchTest.Rules;
 
-namespace ContactHub.Api.Tests;
+namespace ContactHub.Api.Tests.Architecture;
 
 [TestFixture]
 public class ArchitectureTests

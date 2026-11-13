@@ -1,3 +1,4 @@
+using ContactHub.Api.Tests.Common;
 using ContactHub.Application;
 using ContactHub.Application.Abstractions;
 using ContactHub.Application.Behaviors;
@@ -13,7 +14,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ContactHub.Api.Tests;
+namespace ContactHub.Api.Tests.Application;
 
 [TestFixture]
 public class ApplicationWiringTests

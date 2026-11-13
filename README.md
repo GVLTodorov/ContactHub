@@ -94,7 +94,7 @@ Swagger and the SPA on port 8080). It sets `SeedDemoData=true`, `healthCheckPath
 
 Each layer is its own project, and references point inward only
 (`ContactHub.Api` → `ContactHub.Infrastructure` → `ContactHub.Application` → `ContactHub.Domain`).
-`ContactHub.Api.Tests/ArchitectureTests.cs` (NetArchTest) fails the build if a layer references
+`ContactHub.Api.Tests/Architecture/ArchitectureTests.cs` (NetArchTest) fails the build if a layer references
 the wrong one.
 
 ```text
@@ -120,7 +120,7 @@ backend/
 │   ├── Middleware/     ValidationExceptionHandler, NotFoundExceptionHandler
 │   ├── Extensions/     SwaggerTopBar
 │   └── Program.cs, Startup.cs, appsettings*.json
-├── ContactHub.Api.Tests/               unit + architecture tests
+├── ContactHub.Api.Tests/               unit tests in Domain/, Application/, Infrastructure/, Api/, Architecture/ (+ Common/ helpers)
 └── ContactHub.Api.Integration.Tests/   HTTP endpoints via WebApplicationFactory
 ```
 
@@ -216,7 +216,7 @@ flowchart LR
 | FluentValidation (entities) | `backend/ContactHub.Domain/Entities/Contact.cs` (`ContactValidator`), `backend/ContactHub.Domain/ValueObjects/Address.cs` (`AddressValidator`) |
 | CQRS | `backend/ContactHub.Application/Abstractions/`, `backend/ContactHub.Application/DependencyInjection.cs`, `backend/ContactHub.Application/Contacts/`, `backend/ContactHub.Api/Controllers/ContactsController.cs` |
 | Rich Domain Model | `backend/ContactHub.Domain/Entities/Contact.cs`, `backend/ContactHub.Domain/ValueObjects/Address.cs`, `backend/ContactHub.Domain/ValueObjects/PhoneNumber.cs`, `backend/ContactHub.Domain/ValueObjects/Iban.cs`, `backend/ContactHub.Domain/Exceptions/DomainValidationException.cs` |
-| Clean Architecture | `backend/ContactHub.Domain/`, `backend/ContactHub.Application/` (`Abstractions/IAppDbContext.cs`), `backend/ContactHub.Infrastructure/`, `backend/ContactHub.Api/` (web host), `backend/ContactHub.Api.Tests/ArchitectureTests.cs` |
+| Clean Architecture | `backend/ContactHub.Domain/`, `backend/ContactHub.Application/` (`Abstractions/IAppDbContext.cs`), `backend/ContactHub.Infrastructure/`, `backend/ContactHub.Api/` (web host), `backend/ContactHub.Api.Tests/Architecture/ArchitectureTests.cs` |
 | ngrx Store | `frontend/src/app/store/contacts/`, `frontend/src/app/app.config.ts`, `frontend/src/app/api/contacts-api.ts` |
 | PrimeNG components | `frontend/src/app/app.config.ts` (`providePrimeNG`, Aura), `frontend/src/app/pages/contacts/contacts.html` (Table, ConfirmDialog), `frontend/src/app/components/contact-form/contact-form.html` (InputText, DatePicker, Fieldset), `frontend/src/app/components/layout/layout.html` |
 | Playwright e2e test | `e2e/ContactHub.E2E/` (.NET console app, `Program.Main`), `e2e` job in `.github/workflows/ci.yml` |

@@ -1,3 +1,4 @@
+using ContactHub.Api.Tests.Common;
 using ContactHub.Domain.Entities;
 using ContactHub.Domain.Exceptions;
 using ContactHub.Domain.ValueObjects;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace ContactHub.Api.Tests;
+namespace ContactHub.Api.Tests.Infrastructure;
 
 [TestFixture]
 public class MigrationTests

@@ -6,7 +6,7 @@
 - `backend/`: ASP.NET Core Web API with controllers (no Minimal APIs), NUnit in `ContactHub.Api.Tests/`, one solution file
 - Clean Architecture: `ContactHub.Domain` ← `ContactHub.Application` ← `ContactHub.Infrastructure`;
   `ContactHub.Api/` is the web host (controllers, `Program.cs`, config). Application uses `IAppDbContext`, never
-  Infrastructure. `ContactHub.Api.Tests/ArchitectureTests.cs` enforces the references
+  Infrastructure. `ContactHub.Api.Tests/Architecture/ArchitectureTests.cs` enforces the references
 - `frontend/`: tested with Vitest
 - `Dockerfile`, `compose.yml`, `.github/`: Docker Compose, GitHub Actions
 

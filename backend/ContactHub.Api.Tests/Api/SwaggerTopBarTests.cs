@@ -2,7 +2,7 @@ using ContactHub.Api.Extensions;
 using Microsoft.Extensions.Configuration;
 using Swashbuckle.AspNetCore.SwaggerUI;
 
-namespace ContactHub.Api.Tests;
+namespace ContactHub.Api.Tests.Api;
 
 [TestFixture]
 public class SwaggerTopBarTests

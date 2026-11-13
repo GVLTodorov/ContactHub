@@ -11,7 +11,7 @@ using FluentValidation.Results;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ContactHub.Api.Tests;
+namespace ContactHub.Api.Tests.Api;
 
 [TestFixture]
 public class ExceptionHandlerTests

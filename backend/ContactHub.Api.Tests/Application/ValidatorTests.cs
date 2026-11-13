@@ -1,3 +1,4 @@
+using ContactHub.Api.Tests.Common;
 using ContactHub.Application.Contacts;
 using ContactHub.Application.Contacts.Commands.CreateContact;
 using ContactHub.Application.Contacts.Commands.DeleteContact;
@@ -6,7 +7,7 @@ using ContactHub.Application.Contacts.Queries.GetContactById;
 using ContactHub.Application.Contacts.Queries.GetContacts;
 using FluentValidation.Results;
 
-namespace ContactHub.Api.Tests;
+namespace ContactHub.Api.Tests.Application;
 
 [TestFixture]
 public class ValidatorTests

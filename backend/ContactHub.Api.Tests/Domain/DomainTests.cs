@@ -2,7 +2,7 @@ using ContactHub.Domain.Entities;
 using ContactHub.Domain.Exceptions;
 using ContactHub.Domain.ValueObjects;
 
-namespace ContactHub.Api.Tests;
+namespace ContactHub.Api.Tests.Domain;
 
 [TestFixture]
 public class DomainTests
