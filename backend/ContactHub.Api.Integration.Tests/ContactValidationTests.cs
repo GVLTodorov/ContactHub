@@ -46,6 +46,7 @@ public class ContactValidationTests : IntegrationTestBase
         yield return new TestCaseData("iban", "DE00000000000000000000", "iban").SetName("iban_BadChecksum");
         yield return new TestCaseData("iban", "12345", "iban").SetName("iban_BadFormat");
         yield return new TestCaseData("iban", "DE89", "iban").SetName("iban_TooShort");
+        yield return new TestCaseData("iban", "NO37860111179470", "iban").SetName("iban_WrongLengthForCountry");
     }
 
     [TestCaseSource(nameof(InvalidCases))]

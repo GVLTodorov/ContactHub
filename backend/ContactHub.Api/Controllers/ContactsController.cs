@@ -1,3 +1,4 @@
+using ContactHub.Api.Contracts;
 using ContactHub.Application.Abstractions;
 using ContactHub.Application.Contacts;
 using ContactHub.Application.Contacts.Commands.CreateContact;
@@ -49,7 +50,7 @@ public class ContactsController : ControllerBase
     [ProducesResponseType<ProblemDetails>(Status404NotFound)]
     public async Task<ContactDto> Update(
         Guid id,
-        CreateContactCommand body,
+        UpdateContactRequest body,
         [FromServices]
         ICommandHandler<UpdateContactCommand, ContactDto> handler,
         CancellationToken cancellationToken)

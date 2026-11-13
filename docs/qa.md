@@ -102,6 +102,7 @@ Implemented by hand (no MediatR). Commands change state, and queries only read (
 | Commands: Create, Update, Delete (command, validator, handler per folder) | [Contacts/Commands/](../backend/ContactHub.Application/Contacts/Commands/) |
 | Queries: GetContacts, GetContactById | [Contacts/Queries/](../backend/ContactHub.Application/Contacts/Queries/) |
 | Controller dispatches commands and queries to handlers (`[FromServices]`) | [ContactsController.cs](../backend/ContactHub.Api/Controllers/ContactsController.cs) |
+| `PUT` body is a separate HTTP contract, mapped to `UpdateContactCommand` | [UpdateContactRequest.cs](../backend/ContactHub.Api/Contracts/UpdateContactRequest.cs) |
 
 **Endpoints:**
 
@@ -124,7 +125,7 @@ Implemented by hand (no MediatR). Commands change state, and queries only read (
 | Factory `Contact.Create(...)` that validates invariants | [Contact.cs:26-49](../backend/ContactHub.Domain/Entities/Contact.cs#L26-L49) |
 | Behaviour methods `Rename`, `ChangeDateOfBirth`, `ChangeAddress`, `ChangePhoneNumber`, `ChangeIban` | [Contact.cs:51-68](../backend/ContactHub.Domain/Entities/Contact.cs#L51-L68) |
 | Change tracking: rolls back on invalid state, bumps `UpdatedAt` only on a real change | [Contact.cs:70-91](../backend/ContactHub.Domain/Entities/Contact.cs#L70-L91) |
-| Value object `Iban`: normalization, ISO 13616 mod-97 checksum, `ToFormatted()` | [Iban.cs](../backend/ContactHub.Domain/ValueObjects/Iban.cs) (checksum at [line 59](../backend/ContactHub.Domain/ValueObjects/Iban.cs#L59)) |
+| Value object `Iban`: normalization, length per country (SWIFT IBAN registry, 89 countries), ISO 13616 mod-97 checksum, `ToFormatted()` | [Iban.cs](../backend/ContactHub.Domain/ValueObjects/Iban.cs) (country lengths at [line 10](../backend/ContactHub.Domain/ValueObjects/Iban.cs#L10), checks at [line 135](../backend/ContactHub.Domain/ValueObjects/Iban.cs#L135), checksum at [line 156](../backend/ContactHub.Domain/ValueObjects/Iban.cs#L156)) |
 | Value object `PhoneNumber`: optional `+` and 7–15 digits, normalized | [PhoneNumber.cs](../backend/ContactHub.Domain/ValueObjects/PhoneNumber.cs) |
 | Value object `Address` | [Address.cs](../backend/ContactHub.Domain/ValueObjects/Address.cs) |
 | Domain exception | [DomainValidationException.cs](../backend/ContactHub.Domain/Exceptions/DomainValidationException.cs) |
@@ -185,7 +186,7 @@ it saves a screenshot and a trace to `e2e/artifacts/`.
 | Extra | Where |
 | --- | --- |
 | Clean Architecture, one project per layer, enforced by architecture tests | [ArchitectureTests.cs](../backend/ContactHub.Api.Tests/Architecture/ArchitectureTests.cs), [architecture.md](architecture.md) |
-| Client-side validation that mirrors the server rules (IBAN, phone, date of birth) | [validators.ts](../frontend/src/app/components/contact-form/validators.ts) |
+| Client-side validation that mirrors the server rules (IBAN length per country and checksum, phone, date of birth) | [validators.ts](../frontend/src/app/components/contact-form/validators.ts), [iban-lengths.ts](../frontend/src/app/components/contact-form/iban-lengths.ts) |
 | Search, sorting and paging on the contact list | [contacts.html](../frontend/src/app/pages/contacts/contacts.html), [contacts.reducer.ts:124](../frontend/src/app/store/contacts/contacts.reducer.ts#L124) |
 | Unit and integration tests with a 95% coverage gate | [ContactHub.Api.Tests/](../backend/ContactHub.Api.Tests/), [ContactHub.Api.Integration.Tests/](../backend/ContactHub.Api.Integration.Tests/) |
 | Docker image, Compose, CI/CD to Render, coverage badges, demo video | [deployment.md](deployment.md) |

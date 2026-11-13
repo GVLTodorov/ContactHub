@@ -28,7 +28,7 @@ API with SQLite and an Angular UI. It is hosted on [Render](https://render.com) 
   code, city, country), **phone number** and **IBAN**.
 - List, view, create, edit and delete contacts, stored in SQLite. No accounts.
 - One search box filters by name, phone, IBAN or city, plus column sorting and paging.
-- Validation in the browser, on each request and in the domain model (IBAN mod-97 checksum, phone
+- Validation in the browser, on each request and in the domain model (IBAN length per country and mod-97 checksum, phone
   format, date of birth range). Server errors show under the matching field.
 - Responsive: on narrow screens the table collapses to stacked rows.
 

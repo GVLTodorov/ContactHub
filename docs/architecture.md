@@ -86,8 +86,8 @@ flowchart LR
    is not in the future and not more than 150 years ago. A failure throws
    `DomainValidationException`.
 3. **Value objects (Domain):** `Address.Create` (with `AddressValidator`), `PhoneNumber.Create`
-   (an optional leading `+` followed by 7 to 15 digits, normalized) and `Iban.Create` (format check
-   and ISO 13616 mod-97 checksum, normalized, `ToFormatted()` in groups of four). An invalid
+   (an optional leading `+` followed by 7 to 15 digits, normalized) and `Iban.Create` (format check,
+   length per country from the SWIFT IBAN registry, ISO 13616 mod-97 checksum, normalized, `ToFormatted()` in groups of four). An invalid
    value object cannot be constructed.
 4. **Client:** typed Reactive Forms in `ContactForm` check required fields and lengths, and use
    the `ibanValidator`, `phoneValidator` and `dateOfBirthValidator` from

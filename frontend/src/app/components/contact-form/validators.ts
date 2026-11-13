@@ -1,8 +1,11 @@
 import { AbstractControl, ValidationErrors } from '@angular/forms';
+import { IBAN_LENGTHS } from './iban-lengths';
 
 export function isValidIban(raw: string): boolean {
   const iban = raw.replace(/\s+/g, '').toUpperCase();
   if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/.test(iban)) return false;
+  const expected = Object.hasOwn(IBAN_LENGTHS, iban.slice(0, 2)) ? IBAN_LENGTHS[iban.slice(0, 2)] : undefined;
+  if (expected === undefined || iban.length !== expected) return false;
   const rearranged = iban.slice(4) + iban.slice(0, 4);
   let remainder = 0;
   for (const ch of rearranged) {

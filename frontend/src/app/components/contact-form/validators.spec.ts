@@ -15,6 +15,20 @@ describe('validators', () => {
     expect(ibanValidator(new FormControl(''))).toBeNull();
   });
 
+  it('accepts valid NO, BG and MT IBANs of the right length', () => {
+    expect(isValidIban('NO9386011117947')).toBe(true);
+    expect(isValidIban('BG80BNBG96611020345678')).toBe(true);
+    expect(isValidIban('MT84MALT011000012345MTLCAST001S')).toBe(true);
+  });
+
+  it('rejects a correct checksum with the wrong length', () => {
+    expect(isValidIban('NO37860111179470')).toBe(false);
+  });
+
+  it('rejects an unknown country code', () => {
+    expect(isValidIban('XX89370400440532013000')).toBe(false);
+  });
+
   it('validates phone numbers', () => {
     expect(isValidPhone('+49 (170) 123-4567')).toBe(true);
     expect(isValidPhone('123')).toBe(false);

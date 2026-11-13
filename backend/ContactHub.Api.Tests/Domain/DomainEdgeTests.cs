@@ -87,6 +87,26 @@ public class DomainEdgeTests
     }
 
     [Test]
+    public void Iban_CorrectChecksumWrongLength_IsInvalid()
+    {
+        Assert.That(Iban.IsValid("NO37860111179470"), Is.False);
+    }
+
+    [Test]
+    public void Iban_UnknownCountry_IsInvalid()
+    {
+        Assert.That(Iban.IsValid("XX89370400440532013000"), Is.False);
+    }
+
+    [TestCase("NO9386011117947")]
+    [TestCase("BG80BNBG96611020345678")]
+    [TestCase("MT84MALT011000012345MTLCAST001S")]
+    public void Iban_ValidForCountryLength_IsValid(string value)
+    {
+        Assert.That(Iban.IsValid(value), Is.True);
+    }
+
+    [Test]
     public void PhoneNumber_WhitespaceAndNull_AreInvalid()
     {
         Assert.That(PhoneNumber.IsValid("   "), Is.False);
