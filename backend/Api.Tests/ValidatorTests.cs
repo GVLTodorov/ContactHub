@@ -1,9 +1,9 @@
-using Api.Application.Contacts;
-using Api.Application.Contacts.Commands.CreateContact;
-using Api.Application.Contacts.Commands.DeleteContact;
-using Api.Application.Contacts.Commands.UpdateContact;
-using Api.Application.Contacts.Queries.GetContactById;
-using Api.Application.Contacts.Queries.GetContacts;
+using ContactHub.Application.Contacts;
+using ContactHub.Application.Contacts.Commands.CreateContact;
+using ContactHub.Application.Contacts.Commands.DeleteContact;
+using ContactHub.Application.Contacts.Commands.UpdateContact;
+using ContactHub.Application.Contacts.Queries.GetContactById;
+using ContactHub.Application.Contacts.Queries.GetContacts;
 using FluentValidation.Results;
 
 namespace Api.Tests;

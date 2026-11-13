@@ -169,7 +169,7 @@ jobs:
           frontend=$(find frontend-coverage -name 'cobertura-coverage.xml' | sort | paste -sd ';')
           echo "backend reports: $backend"
           echo "frontend reports: $frontend"
-          reportgenerator "-reports:$backend" "-targetdir:rg/backend" "-reporttypes:Badges" "-assemblyfilters:+Api"
+          reportgenerator "-reports:$backend" "-targetdir:rg/backend" "-reporttypes:Badges" "-assemblyfilters:+Api;+ContactHub.Domain;+ContactHub.Application;+ContactHub.Infrastructure"
           reportgenerator "-reports:$frontend" "-targetdir:rg/frontend" "-reporttypes:Badges"
           for app in backend frontend; do
             cp "rg/$app/badge_linecoverage.svg" "badges/coverage/$app/line.svg"

@@ -23,6 +23,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Api\Api.csproj" />
+    <ProjectReference Include="..\ContactHub.Domain\ContactHub.Domain.csproj" />
+    <ProjectReference Include="..\ContactHub.Application\ContactHub.Application.csproj" />
+    <ProjectReference Include="..\ContactHub.Infrastructure\ContactHub.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

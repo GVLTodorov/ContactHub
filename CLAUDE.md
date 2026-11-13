@@ -3,7 +3,10 @@
 ## Stack
 
 - .NET SDK 10 (`global.json`), nullable C#; Node 24 (`.nvmrc`)
-- `backend/`: ASP.NET Core Web API with controllers (no Minimal APIs), `Api/`, NUnit in `Api.Tests/`, one solution file
+- `backend/`: ASP.NET Core Web API with controllers (no Minimal APIs), NUnit in `Api.Tests/`, one solution file
+- Clean Architecture: `ContactHub.Domain` ← `ContactHub.Application` ← `ContactHub.Infrastructure`;
+  `Api/` is the web host (controllers, `Program.cs`, config). Application uses `IAppDbContext`, never
+  Infrastructure. `Api.Tests/ArchitectureTests.cs` enforces the references
 - `frontend/`: tested with Vitest
 - `Dockerfile`, `compose.yml`, `.github/`: Docker Compose, GitHub Actions
 
@@ -27,10 +30,11 @@
 ## Database
 
 - Database: SQLite via EF Core (`Microsoft.EntityFrameworkCore.Sqlite`, `UseSqlite`)
-- Data code: entities in `Api/Domain/`, `AppDbContext` and migrations in `Api/Infrastructure/Persistence/`. SQLite can't sort `DateTimeOffset`
+- Data code: entities in `ContactHub.Domain/`, `AppDbContext` and migrations in
+  `ContactHub.Infrastructure/Persistence/`. SQLite can't sort `DateTimeOffset`
   or `decimal`: use UTC `DateTime` and integer cents
-- Schema changes, from `backend/`: `dotnet ef migrations add <Change> --project Api` (first
-  time `dotnet tool restore`). The app applies them at startup with `Database.Migrate()`
+- Schema changes, from `backend/`: `dotnet ef migrations add <Change> --project
+  ContactHub.Infrastructure --startup-project Api` (first time `dotnet tool restore`). The app applies them at startup with `Database.Migrate()`
 - Database file: `database/contacthub.db` inside the running app's folder, e.g.
   `backend/Api/bin/Debug/net10.0/database/contacthub.db`, created on first run. A relative
   `Data Source` is resolved against `AppContext.BaseDirectory`, never the working directory or

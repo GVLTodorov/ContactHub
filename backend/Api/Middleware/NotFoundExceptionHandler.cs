@@ -1,4 +1,4 @@
-using Api.Application.Exceptions;
+using ContactHub.Application.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 

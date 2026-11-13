@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
-using Api.Infrastructure.Persistence;
+using ContactHub.Infrastructure.Persistence;
 
 namespace Api.Tests;
 

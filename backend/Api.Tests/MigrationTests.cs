@@ -1,7 +1,7 @@
-using Api.Domain.Entities;
-using Api.Domain.Exceptions;
-using Api.Domain.ValueObjects;
-using Api.Infrastructure.Persistence;
+using ContactHub.Domain.Entities;
+using ContactHub.Domain.Exceptions;
+using ContactHub.Domain.ValueObjects;
+using ContactHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;

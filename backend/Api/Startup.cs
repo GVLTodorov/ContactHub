@@ -1,8 +1,8 @@
-using Api.Application;
 using Api.Extensions;
-using Api.Infrastructure;
-using Api.Infrastructure.Persistence;
 using Api.Middleware;
+using ContactHub.Application;
+using ContactHub.Infrastructure;
+using ContactHub.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;

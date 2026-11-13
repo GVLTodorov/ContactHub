@@ -1,11 +1,11 @@
 using System.Text.Json;
-using Api.Application.Abstractions;
-using Api.Application.Exceptions;
 using Api.Controllers;
-using Api.Domain.Entities;
-using Api.Domain.Exceptions;
-using Api.Domain.ValueObjects;
 using Api.Middleware;
+using ContactHub.Application.Abstractions;
+using ContactHub.Application.Exceptions;
+using ContactHub.Domain.Entities;
+using ContactHub.Domain.Exceptions;
+using ContactHub.Domain.ValueObjects;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Http;

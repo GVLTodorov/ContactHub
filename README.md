@@ -201,12 +201,13 @@ flowchart LR
 
 | Requirement | Where |
 | --- | --- |
-| Data persisted | `backend/Api/Infrastructure/DependencyInjection.cs` (SQLite path), `backend/Api/Startup.cs` (`Database.Migrate()`), `compose.yml` (`dbdata` volume) |
-| EF Core | `backend/Api/Infrastructure/Persistence/AppDbContext.cs`, `backend/Api/Infrastructure/Persistence/Configurations/ContactConfiguration.cs`, `backend/Api/Infrastructure/Persistence/Migrations/` |
-| FluentValidation (models) | `backend/Api/Application/Contacts/Commands/CreateContact/CreateContactValidator.cs`, `backend/Api/Application/Contacts/Commands/UpdateContact/UpdateContactValidator.cs`, `backend/Api/Application/Behaviors/ValidationCommandHandlerDecorator.cs` |
-| FluentValidation (entities) | `backend/Api/Domain/Entities/Contact.cs` (`ContactValidator`), `backend/Api/Domain/ValueObjects/Address.cs` (`AddressValidator`) |
-| CQRS | `backend/Api/Application/Abstractions/`, `backend/Api/Application/DependencyInjection.cs`, `backend/Api/Application/Contacts/`, `backend/Api/Controllers/ContactsController.cs` |
-| Rich Domain Model | `backend/Api/Domain/Entities/Contact.cs`, `backend/Api/Domain/ValueObjects/Address.cs`, `backend/Api/Domain/ValueObjects/PhoneNumber.cs`, `backend/Api/Domain/ValueObjects/Iban.cs`, `backend/Api/Domain/Exceptions/DomainValidationException.cs` |
+| Data persisted | `backend/ContactHub.Infrastructure/DependencyInjection.cs` (SQLite path), `backend/Api/Startup.cs` (`Database.Migrate()`), `compose.yml` (`dbdata` volume) |
+| EF Core | `backend/ContactHub.Infrastructure/Persistence/AppDbContext.cs`, `backend/ContactHub.Infrastructure/Persistence/Configurations/ContactConfiguration.cs`, `backend/ContactHub.Infrastructure/Persistence/Migrations/` |
+| FluentValidation (models) | `backend/ContactHub.Application/Contacts/Commands/CreateContact/CreateContactValidator.cs`, `backend/ContactHub.Application/Contacts/Commands/UpdateContact/UpdateContactValidator.cs`, `backend/ContactHub.Application/Behaviors/ValidationCommandHandlerDecorator.cs` |
+| FluentValidation (entities) | `backend/ContactHub.Domain/Entities/Contact.cs` (`ContactValidator`), `backend/ContactHub.Domain/ValueObjects/Address.cs` (`AddressValidator`) |
+| CQRS | `backend/ContactHub.Application/Abstractions/`, `backend/ContactHub.Application/DependencyInjection.cs`, `backend/ContactHub.Application/Contacts/`, `backend/Api/Controllers/ContactsController.cs` |
+| Rich Domain Model | `backend/ContactHub.Domain/Entities/Contact.cs`, `backend/ContactHub.Domain/ValueObjects/Address.cs`, `backend/ContactHub.Domain/ValueObjects/PhoneNumber.cs`, `backend/ContactHub.Domain/ValueObjects/Iban.cs`, `backend/ContactHub.Domain/Exceptions/DomainValidationException.cs` |
+| Clean Architecture | `backend/ContactHub.Domain/`, `backend/ContactHub.Application/` (`Abstractions/IAppDbContext.cs`), `backend/ContactHub.Infrastructure/`, `backend/Api/` (web host), `backend/Api.Tests/ArchitectureTests.cs` |
 | ngrx Store | `frontend/src/app/store/contacts/`, `frontend/src/app/app.config.ts`, `frontend/src/app/api/contacts-api.ts` |
 | PrimeNG components | `frontend/src/app/app.config.ts` (`providePrimeNG`, Aura), `frontend/src/app/pages/contacts/contacts.html` (Table, ConfirmDialog), `frontend/src/app/components/contact-form/contact-form.html` (InputText, DatePicker, Fieldset), `frontend/src/app/components/layout/layout.html` |
 | Playwright e2e test | `e2e/ContactHub.E2E/` (.NET console app, `Program.Main`), `e2e` job in `.github/workflows/ci.yml` |

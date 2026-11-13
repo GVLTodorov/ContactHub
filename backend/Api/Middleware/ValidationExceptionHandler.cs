@@ -1,4 +1,4 @@
-using Api.Domain.Exceptions;
+using ContactHub.Domain.Exceptions;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;

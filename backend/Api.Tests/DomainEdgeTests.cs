@@ -1,6 +1,6 @@
-using Api.Domain.Entities;
-using Api.Domain.Exceptions;
-using Api.Domain.ValueObjects;
+using ContactHub.Domain.Entities;
+using ContactHub.Domain.Exceptions;
+using ContactHub.Domain.ValueObjects;
 
 namespace Api.Tests;
 

@@ -1,14 +1,14 @@
-using Api.Application.Abstractions;
-using Api.Application.Contacts;
-using Api.Application.Contacts.Commands.CreateContact;
-using Api.Application.Contacts.Commands.DeleteContact;
-using Api.Application.Contacts.Commands.UpdateContact;
-using Api.Application.Contacts.Queries.GetContactById;
-using Api.Application.Contacts.Queries.GetContacts;
-using Api.Application.Exceptions;
-using Api.Domain.Entities;
-using Api.Domain.Exceptions;
-using Api.Domain.ValueObjects;
+using ContactHub.Application.Abstractions;
+using ContactHub.Application.Contacts;
+using ContactHub.Application.Contacts.Commands.CreateContact;
+using ContactHub.Application.Contacts.Commands.DeleteContact;
+using ContactHub.Application.Contacts.Commands.UpdateContact;
+using ContactHub.Application.Contacts.Queries.GetContactById;
+using ContactHub.Application.Contacts.Queries.GetContacts;
+using ContactHub.Application.Exceptions;
+using ContactHub.Domain.Entities;
+using ContactHub.Domain.Exceptions;
+using ContactHub.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Tests;
