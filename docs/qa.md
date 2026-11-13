@@ -17,7 +17,7 @@ it. Links point to the exact files and lines. All items are **implemented**.
 | 10 | [Git repository](#10-git-repository) | ✅ |
 
 Quick check without installing anything: open the live app at
-<https://contacthub-h4or.onrender.com> (the first load can take up to a minute while the free tier
+<https://contacthub-web.onrender.com> (the first load can take up to a minute while the free-tier API
 wakes up) and the API docs at <https://contacthub-h4or.onrender.com/swagger>.
 
 ---

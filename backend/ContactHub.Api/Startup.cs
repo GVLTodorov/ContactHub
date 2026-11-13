@@ -3,9 +3,7 @@ using ContactHub.Api.Middleware;
 using ContactHub.Application;
 using ContactHub.Infrastructure;
 using ContactHub.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi;
 
 namespace ContactHub.Api;
@@ -50,25 +48,8 @@ public class Startup(IConfiguration configuration)
             SwaggerTopBar.AddTopBarLinks(o, Configuration);
         });
 
-        var staticDir = Configuration["StaticDir"];
-        PhysicalFileProvider? files = null;
-        if (!string.IsNullOrEmpty(staticDir) && Directory.Exists(staticDir))
-        {
-            files = new PhysicalFileProvider(Path.GetFullPath(staticDir));
-            app.UseDefaultFiles(new DefaultFilesOptions { FileProvider = files });
-            app.UseStaticFiles(new StaticFileOptions { FileProvider = files });
-        }
-
         app.UseRouting();
         app.UseAuthorization();
-        app.UseEndpoints(endpoints =>
-        {
-            endpoints.MapControllers();
-            if (files is not null)
-            {
-                endpoints.MapFallbackToFile("{*path:regex(^(?!api(/|$)|swagger(/|$)).*$)}", "index.html", new StaticFileOptions { FileProvider = files })
-                    .Add(b => b.Metadata.Add(new HttpMethodMetadata(["GET"])));
-            }
-        });
+        app.UseEndpoints(endpoints => endpoints.MapControllers());
     }
 }

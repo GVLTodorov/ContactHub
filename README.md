@@ -7,13 +7,13 @@ API with SQLite and an Angular UI. It is hosted on [Render](https://render.com) 
 
 | What | URL |
 | --- | --- |
-| App (list, search, create, edit, delete contacts) | <https://contacthub-h4or.onrender.com> |
+| App (list, search, create, edit, delete contacts) | <https://contacthub-web.onrender.com> |
 | Swagger UI (API docs, try it out) | <https://contacthub-h4or.onrender.com/swagger> |
-| Health check | <https://contacthub-h4or.onrender.com/api/health> |
+| API health check | <https://contacthub-h4or.onrender.com/api/health> |
 | Source | <https://github.com/GVLTodorov/ContactHub> |
 
-> The free tier sleeps after about 15 minutes without traffic, so the first visit can take up to a
-> minute to load. Data resets to five demo contacts on every restart or deploy.
+> The app is a Render static site; the API is a separate free web service that sleeps after about 15
+> minutes without traffic, so the first request can take up to a minute. Data resets to five demo contacts on every restart or deploy.
 
 | Project | Line coverage | Branch coverage |
 | --- | --- | --- |
