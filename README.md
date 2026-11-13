@@ -76,6 +76,8 @@ Full details, diagrams and validation rules: [Architecture](Docs/architecture.md
 
 ## Requirements to code
 
+A full checklist with line links and how to verify each item: [QA](Docs/QA.md).
+
 | Requirement | Where |
 | --- | --- |
 | Data persisted | `backend/ContactHub.Infrastructure/DependencyInjection.cs` (SQLite path), `backend/ContactHub.Api/Startup.cs` (`Database.Migrate()`), `compose.yml` (`dbdata` volume) |
