@@ -7,6 +7,9 @@ import { contactsFeature } from '../../store/contacts/contacts.reducer';
 import { ContactNew } from './contact-new';
 
 describe('ContactNew', () => {
+  // overrideSelector sets results on the shared feature selectors; reset them so other spec files see real ones.
+  afterEach(() => TestBed.inject(MockStore, null)?.resetSelectors());
+
   function setup(error: string | null = null) {
     TestBed.configureTestingModule({ providers: [provideRouter([]), provideMockStore()] });
     const store = TestBed.inject(MockStore);

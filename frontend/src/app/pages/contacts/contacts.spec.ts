@@ -18,6 +18,9 @@ const contact = {
 } as Contact;
 
 describe('Contacts page', () => {
+  // overrideSelector sets results on the shared feature selectors; reset them so other spec files see real ones.
+  afterEach(() => TestBed.inject(MockStore, null)?.resetSelectors());
+
   function setup(all: Contact[], filtered: Contact[], query: string, loadStatus = 'success', error: string | null = null) {
     TestBed.configureTestingModule({ providers: [provideRouter([]), provideMockStore()] });
     const store = TestBed.inject(MockStore);

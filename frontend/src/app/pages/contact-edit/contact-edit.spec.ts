@@ -40,6 +40,9 @@ const routerState = (id?: string | null) => ({
 });
 
 describe('ContactEdit', () => {
+  // overrideSelector sets results on the shared feature selectors; reset them so other spec files see real ones.
+  afterEach(() => TestBed.inject(MockStore, null)?.resetSelectors());
+
   function setup(opts: Options) {
     TestBed.configureTestingModule({ providers: [provideRouter([]), provideMockStore({ initialState: { router: routerState(opts.id) } })] });
     const store = TestBed.inject(MockStore);

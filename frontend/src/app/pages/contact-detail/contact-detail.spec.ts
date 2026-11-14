@@ -22,6 +22,9 @@ const contact: Contact = {
 };
 
 describe('ContactDetail', () => {
+  // overrideSelector sets results on the shared feature selectors; reset them so other spec files see real ones.
+  afterEach(() => TestBed.inject(MockStore, null)?.resetSelectors());
+
   function setup(status: string, selected: Contact | null, error: string | null = null) {
     TestBed.configureTestingModule({
       providers: [provideRouter([]), provideMockStore()],
