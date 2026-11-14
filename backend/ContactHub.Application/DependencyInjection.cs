@@ -10,9 +10,7 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         var assembly = typeof(DependencyInjection).Assembly;
-        services.AddValidatorsFromAssembly(
-            assembly,
-            filter: r => r.ValidatorType.Namespace?.StartsWith("ContactHub.Application", StringComparison.Ordinal) == true);
+        services.AddValidatorsFromAssembly(assembly);
 
         foreach (var type in assembly.GetTypes().Where(t => t is { IsClass: true, IsAbstract: false }))
         {

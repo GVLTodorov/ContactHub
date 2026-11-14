@@ -82,8 +82,10 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "coverageInclude": ["src/**/*.ts"],
-            "coverageExclude": ["src/**/*.spec.ts", "src/main.ts", "src/environments/**"],
-            "coverageReporters": ["text", "cobertura"]
+            // app.config.ts is pure provider wiring (bootstrap config), exercised only by the real app.
+            "coverageExclude": ["src/**/*.spec.ts", "src/main.ts", "src/environments/**", "src/app/app.config.ts"],
+            "coverageReporters": ["text", "cobertura"],
+            "coverageThresholds": { "lines": 100, "branches": 100, "functions": 100, "statements": 100 }
           }
         },
         "lint": {

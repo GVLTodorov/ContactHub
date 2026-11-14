@@ -15,10 +15,13 @@ API with SQLite and an Angular UI. It is hosted on [Render](https://render.com) 
 > The app is a Render static site; the API is a separate free web service that sleeps after about 15
 > minutes without traffic, so the first request can take up to a minute. Data resets to five demo contacts on every restart or deploy.
 
-| Project | Line coverage | Branch coverage |
+| Suite | Line coverage | Branch coverage |
 | --- | --- | --- |
-| Backend | ![Backend line coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/backend/line.svg) | ![Backend branch coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/backend/branch.svg) |
-| Frontend | ![Frontend line coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/frontend/line.svg) | ![Frontend branch coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/frontend/branch.svg) |
+| Backend unit | ![Backend unit line coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/backend/unit/line.svg) | ![Backend unit branch coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/backend/unit/branch.svg) |
+| Backend integration | ![Backend integration line coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/backend/integration/line.svg) | ![Backend integration branch coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/backend/integration/branch.svg) |
+| Backend E2E | ![Backend E2E line coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/backend/e2e/line.svg) | ![Backend E2E branch coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/backend/e2e/branch.svg) |
+| Frontend unit | ![Frontend unit line coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/frontend/unit/line.svg) | ![Frontend unit branch coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/frontend/unit/branch.svg) |
+| Frontend E2E | ![Frontend E2E line coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/frontend/e2e/line.svg) | ![Frontend E2E branch coverage](https://github.com/GVLTodorov/ContactHub/raw/badges/coverage/frontend/e2e/branch.svg) |
 
 ![Demo: Swagger UI's Client button opens the app, then the seeded list is searched, a contact's phone and address are copied, a new contact is created (an invalid IBAN is fixed), edited and deleted.](https://github.com/GVLTodorov/ContactHub/raw/badges/demo/demo.gif)
 
@@ -48,7 +51,7 @@ tests, Docker Compose and GitHub Actions.
 | Backend | `cd backend && dotnet run --project ContactHub.Api` | API on http://127.0.0.1:8080, Swagger at `/swagger` (its **Client** button opens the app) |
 | Frontend | `cd frontend && npm install && npm run start` | App on http://127.0.0.1:4700, `/api` proxied to the backend |
 | Whole stack | `docker compose up --build` | Backend on 8080, frontend on 4700 |
-| Backend tests | `cd backend && dotnet test` | NUnit unit tests (95% coverage gate) and integration tests |
+| Backend tests | `cd backend && dotnet test` | NUnit unit tests (100% coverage gate) and integration tests |
 | Frontend tests | `cd frontend && npm test -- --watch=false` | Vitest |
 | E2E tests | `dotnet test e2e/ContactHub.E2E` (repo root) | NUnit + Playwright, 41 user flows; starts the stack itself (first time: `dotnet build e2e/ContactHub.E2E`, then `pwsh e2e/ContactHub.E2E/bin/Debug/net10.0/playwright.ps1 install chromium`) |
 | Demo video | `dotnet run --project e2e/ContactHub.Demo` (repo root) | Records `e2e/artifacts/demo/demo.webm` |

@@ -13,9 +13,9 @@ public abstract class ContactInputValidator<T> : AbstractValidator<T> where T : 
         RuleFor(c => c.Surname).NotEmpty().MaximumLength(Contact.MaxNameLength);
         RuleFor(c => c.DateOfBirth)
             .NotNull()
-            .Must(d => d is null || d <= Today(timeProvider))
+            .Must(d => d is null || d.Value <= Today(timeProvider))
             .WithMessage("Date of birth cannot be in the future.")
-            .Must(d => d is null || d >= Today(timeProvider).AddYears(-Contact.MaxAgeYears))
+            .Must(d => d is null || d.Value >= Today(timeProvider).AddYears(-Contact.MaxAgeYears))
             .WithMessage($"Date of birth cannot be more than {Contact.MaxAgeYears} years ago.");
         RuleFor(c => c.Address).NotNull();
         RuleFor(c => c.Address!).SetValidator(new AddressInputValidator()).When(c => c.Address is not null);

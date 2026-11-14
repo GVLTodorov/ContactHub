@@ -21,6 +21,76 @@ public abstract class E2ETest
     private IPlaywright _playwright = null!;
     private IBrowser _browser = null!;
     private IBrowserContext _context = null!;
+    private ICDPSession? _cdp;
+    private static readonly HttpClient Assets = new();
+
+    /// <summary>
+    /// Takes the precise V8 coverage of the page and writes the scripts served by the dev server to
+    /// e2e/artifacts/coverage/frontend/raw, each with its source and source map for the converter.
+    /// </summary>
+    private async Task SaveFrontendCoverage()
+    {
+        var cdp = _cdp;
+        _cdp = null;
+        if (cdp is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var taken = await cdp.SendAsync("Profiler.takePreciseCoverage");
+            await cdp.SendAsync("Profiler.stopPreciseCoverage");
+
+            var entries = new List<Dictionary<string, object?>>();
+            foreach (var script in taken!.Value.GetProperty("result").EnumerateArray())
+            {
+                var url = script.GetProperty("url").GetString() ?? string.Empty;
+                if (!url.StartsWith(Servers.FrontendUrl, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var source = await Assets.GetStringAsync(url);
+                string? sourceMap = null;
+                var match = Regex.Match(source, @"//# sourceMappingURL=(\S+)\s*$");
+                if (match.Success)
+                {
+                    var reference = match.Groups[1].Value;
+                    if (reference.StartsWith("data:", StringComparison.Ordinal))
+                    {
+                        // Inline map: data:application/json;base64,<payload>
+                        var payload = reference[(reference.IndexOf(',') + 1)..];
+                        sourceMap = reference.Contains(";base64,", StringComparison.Ordinal)
+                            ? System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload))
+                            : Uri.UnescapeDataString(payload);
+                    }
+                    else
+                    {
+                        sourceMap = await Assets.GetStringAsync(new Uri(new Uri(url), reference));
+                    }
+                }
+
+                entries.Add(new()
+                {
+                    ["url"] = url,
+                    ["scriptId"] = script.GetProperty("scriptId").GetString(),
+                    ["source"] = source,
+                    ["functions"] = script.GetProperty("functions"),
+                    ["sourceMap"] = sourceMap is null ? null : JsonSerializer.Deserialize<JsonElement>(sourceMap),
+                });
+            }
+
+            var rawDir = Path.Combine(E2ESetup.Servers.CoverageDir, "frontend", "raw");
+            Directory.CreateDirectory(rawDir);
+            var file = Path.Combine(rawDir, $"{Guid.NewGuid():N}.json");
+            await File.WriteAllTextAsync(file, JsonSerializer.Serialize(entries));
+        }
+        catch (Exception ex) when (ex is PlaywrightException or HttpRequestException or IOException)
+        {
+            TestContext.Progress.WriteLine($"Could not save frontend coverage: {ex.Message}");
+        }
+    }
 
     protected IPage Page { get; private set; } = null!;
 
@@ -52,6 +122,13 @@ public abstract class E2ETest
         });
         await _context.Tracing.StartAsync(new() { Screenshots = true, Snapshots = true, Sources = false });
         Page = await _context.NewPageAsync();
+
+        if (Servers.Coverage)
+        {
+            _cdp = await _context.NewCDPSessionAsync(Page);
+            await _cdp.SendAsync("Profiler.enable");
+            await _cdp.SendAsync("Profiler.startPreciseCoverage", new Dictionary<string, object> { ["callCount"] = true, ["detailed"] = true });
+        }
     }
 
     [TearDown]
@@ -59,6 +136,8 @@ public abstract class E2ETest
     {
         try
         {
+            await SaveFrontendCoverage();
+
             if (TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed)
             {
                 await SaveFailureArtifacts();

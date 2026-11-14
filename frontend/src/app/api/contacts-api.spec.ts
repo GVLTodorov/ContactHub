@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ContactInput, ContactsApi } from './contacts-api';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ContactInput, ContactsApi, toApiError } from './contacts-api';
 
 describe('ContactsApi', () => {
   let api: ContactsApi;
@@ -65,5 +66,29 @@ describe('ContactsApi', () => {
     expect(req.request.method).toBe('PUT');
     expect(req.request.body).toEqual({ firstName: 'A', version: 4 });
     req.flush({ id: 'abc' });
+  });
+
+  describe('toApiError', () => {
+    const fail = (body: unknown, status: number) => new HttpErrorResponse({ error: body, status });
+
+    it('prefers detail, then title', () => {
+      expect(toApiError(fail({ detail: 'D', title: 'T' }, 400)).message).toBe('D');
+      expect(toApiError(fail({ title: 'T' }, 400)).message).toBe('T');
+    });
+
+    it('keeps field errors and the status', () => {
+      const result = toApiError(fail({ title: 'T', errors: { iban: ['bad'] } }, 400));
+
+      expect(result).toEqual({ message: 'T', fieldErrors: { iban: ['bad'] }, status: 400 });
+    });
+
+    it('falls back when there is no problem body', () => {
+      expect(toApiError(fail(null, 0)).message).toBe('The server is not reachable.');
+      expect(toApiError(fail('text', 500))).toEqual({ message: 'Request failed (500).', fieldErrors: {}, status: 500 });
+    });
+
+    it('handles non-HTTP errors', () => {
+      expect(toApiError(new Error('x'))).toEqual({ message: 'Something went wrong.', fieldErrors: {} });
+    });
   });
 });

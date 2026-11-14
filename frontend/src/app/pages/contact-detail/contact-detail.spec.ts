@@ -110,4 +110,87 @@ describe('ContactDetail', () => {
     expect(ageOf('1990-05-20', new Date(2024, 4, 19))).toBe(33);
     expect(ageOf('1990-05-20', new Date(2024, 4, 20))).toBe(34);
   });
+
+  it('shows empty initials for a contact without names', async () => {
+    const { fixture, el } = setup('success', { ...contact, firstName: '', surname: '' });
+    await fixture.whenStable();
+
+    expect(el.textContent).toBeDefined();
+    expect((fixture.componentInstance as unknown as { initials(): string }).initials()).toBe('');
+  });
+
+  it('does not show feedback when the clipboard write fails', async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error('denied'));
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const { fixture, el } = setup('success', contact);
+    await fixture.whenStable();
+    el.querySelector<HTMLButtonElement>('button[aria-label="Copy IBAN"]')?.click();
+    await fixture.whenStable();
+
+    expect(writeText).toHaveBeenCalled();
+    expect(el.textContent).not.toContain('Copied');
+  });
+
+  it('ignores copy and delete without a contact', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const { fixture } = setup('loading', null);
+    await fixture.whenStable();
+    const page = fixture.componentInstance as unknown as { copy(f: string): Promise<void>; confirmDelete(): void };
+    await page.copy('iban');
+    const confirm = vi.spyOn(fixture.debugElement.injector.get(ConfirmationService), 'confirm');
+    page.confirmDelete();
+
+    expect(writeText).not.toHaveBeenCalled();
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
+  it('dispatches opened and retry for the route id', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        provideMockStore({
+          initialState: { router: { state: { url: '', root: { params: { id: '1' }, firstChild: null } }, navigationId: 1 } },
+        }),
+      ],
+    });
+    const store = TestBed.inject(MockStore);
+    store.overrideSelector(contactsFeature.selectSelectedContact, null);
+    store.overrideSelector(contactsFeature.selectDetailStatus, 'error');
+    store.overrideSelector(contactsFeature.selectDetailError, 'Boom');
+    const dispatch = vi.spyOn(store, 'dispatch');
+    const fixture = TestBed.createComponent(ContactDetail);
+    await fixture.whenStable();
+    const retry = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Retry'),
+    );
+    retry?.click();
+
+    expect(dispatch).toHaveBeenCalledWith(ContactDetailPageActions.opened({ id: '1' }));
+    expect(dispatch).toHaveBeenCalledWith(ContactDetailPageActions.retry({ id: '1' }));
+  });
+
+  it('has no age or initials without a contact', () => {
+    const { fixture } = setup('loading', null);
+    const page = fixture.componentInstance as unknown as { age(): number | null; initials(): string };
+
+    expect(page.age()).toBeNull();
+    expect(page.initials()).toBe('');
+  });
+
+  it('clears the copied feedback after a delay', async () => {
+    vi.useFakeTimers();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const { fixture } = setup('success', contact);
+    const page = fixture.componentInstance as unknown as { copied(): string | null; copy(f: string): Promise<void> };
+    await page.copy('phone');
+
+    expect(page.copied()).toBe('phone');
+
+    vi.advanceTimersByTime(2000);
+
+    expect(page.copied()).toBeNull();
+    vi.useRealTimers();
+  });
 });

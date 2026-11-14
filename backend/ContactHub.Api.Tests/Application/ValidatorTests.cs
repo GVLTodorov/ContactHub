@@ -47,6 +47,21 @@ public class ValidatorTests
     }
 
     [Test]
+    public void UpdateValidator_BirthDateRules_AreEnforced()
+    {
+        var validator = new UpdateContactValidator(new FixedTimeProvider());
+        var id = Guid.NewGuid();
+
+        var future = validator.Validate(Commands.ValidUpdate(id) with { DateOfBirth = new DateOnly(2026, 6, 16) });
+        var ancient = validator.Validate(Commands.ValidUpdate(id) with { DateOfBirth = new DateOnly(1876, 6, 14) });
+        var missing = validator.Validate(Commands.ValidUpdate(id) with { DateOfBirth = null });
+
+        Assert.That(Keys(future), Is.EqualTo(new[] { "DateOfBirth" }));
+        Assert.That(Keys(ancient), Is.EqualTo(new[] { "DateOfBirth" }));
+        Assert.That(Keys(missing), Is.EqualTo(new[] { "DateOfBirth" }));
+    }
+
+    [Test]
     public void EverythingNull_ReportsEachRequiredField()
     {
         var result = _create.Validate(new CreateContactCommand(null, null, null, null, null, null));

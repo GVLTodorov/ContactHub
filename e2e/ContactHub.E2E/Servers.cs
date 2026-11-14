@@ -20,6 +20,42 @@ internal sealed class Servers : IDisposable
 
     public string Root { get; private init; } = string.Empty;
 
+    /// <summary>True when E2E_COVERAGE=true: the backend runs under dotnet-coverage and pages record JS coverage.</summary>
+    public static bool Coverage { get; } = string.Equals(Environment.GetEnvironmentVariable("E2E_COVERAGE"), "true", StringComparison.OrdinalIgnoreCase);
+
+    public string CoverageDir => Path.Combine(Root, "e2e", "artifacts", "coverage");
+
+    private readonly string coverageSession = $"e2e{Guid.NewGuid():N}";
+    private Process? coverageCollector;
+
+    /// <summary>Asks dotnet-coverage to finish the session so the report is written, before any process is killed.</summary>
+    private void StopCoverageCollector()
+    {
+        if (coverageCollector is null)
+        {
+            return;
+        }
+
+        try
+        {
+            using var shutdown = Process.Start(new ProcessStartInfo("dotnet-coverage", ["shutdown", "--timeout", "120000", coverageSession])
+            {
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            });
+            shutdown?.WaitForExit(130_000);
+            coverageCollector.WaitForExit(60_000);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Could not stop the coverage session: {ex.Message}");
+        }
+
+        coverageCollector = null;
+    }
+
     public static async Task<Servers> StartAsync(string dbName, bool seedDemoData)
     {
         var servers = new Servers { Root = FindRepoRoot() };
@@ -38,6 +74,7 @@ internal sealed class Servers : IDisposable
 
     public void Dispose()
     {
+        StopCoverageCollector();
         job?.Dispose();
 
         foreach (var process in started)
@@ -77,7 +114,8 @@ internal sealed class Servers : IDisposable
 
     private async Task RunAsync(string dbName, bool seedDemoData)
     {
-        var reuse = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI"));
+        // With coverage on, never reuse a running backend: it would not be instrumented.
+        var reuse = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI")) && !Coverage;
         var backendEnv = new Dictionary<string, string> { ["ConnectionStrings__Default"] = $"Data Source=database/{dbName}" };
         if (seedDemoData)
         {
@@ -94,7 +132,26 @@ internal sealed class Servers : IDisposable
         }
         else
         {
-            var backend = StartProcess("dotnet", ["run", "--project", Path.Combine("backend", "ContactHub.Api")], Root, backendEnv);
+            string[] run = ["run", "--project", Path.Combine("backend", "ContactHub.Api")];
+            Process backend;
+            if (Coverage)
+            {
+                var output = Path.Combine(CoverageDir, "backend", "coverage.cobertura.xml");
+                Directory.CreateDirectory(Path.GetDirectoryName(output)!);
+                if (File.Exists(output))
+                {
+                    File.Delete(output);
+                }
+
+                string[] collect = ["collect", "--session-id", coverageSession, "--output-format", "cobertura", "--output", output, "--nologo", "--", "dotnet", .. run];
+                backend = StartProcess("dotnet-coverage", collect, Root, backendEnv);
+                coverageCollector = backend;
+            }
+            else
+            {
+                backend = StartProcess("dotnet", run, Root, backendEnv);
+            }
+
             started.Add(backend);
             await WaitFor(BackendUrl, TimeSpan.FromMinutes(5), backend);
         }

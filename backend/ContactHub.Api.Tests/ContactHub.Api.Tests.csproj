@@ -8,7 +8,7 @@
     <IsPackable>false</IsPackable>
     <CollectCoverage>true</CollectCoverage>
     <Include>[ContactHub.*]*</Include>
-    <Threshold>95</Threshold>
+    <Threshold>100</Threshold>
     <ThresholdType>line,branch</ThresholdType>
     <ThresholdStat>total</ThresholdStat>
     <ExcludeByFile>**/*.g.cs</ExcludeByFile>

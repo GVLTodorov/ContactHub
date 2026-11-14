@@ -1,6 +1,6 @@
 import { Contact } from '../../api/contacts-api';
 import { ContactListPageActions, ContactsApiActions } from './contacts.actions';
-import { contactsFeature, initialState } from './contacts.reducer';
+import { contactsFeature, initialState, matchesQuery } from './contacts.reducer';
 
 describe('contacts selectors', () => {
   const appState = (contacts: Contact[] | null) => ({
@@ -83,5 +83,26 @@ describe('contacts selectors', () => {
       expect(ids('PARIS')).toEqual(['2']);
       expect(ids('zzz')).toEqual([]);
     });
+  });
+
+  it('selects no contact without a route id', () => {
+    const contacts = appState([]).contacts;
+    const router = { state: { url: '', root: { params: {}, firstChild: null } }, navigationId: 1 };
+
+    expect(contactsFeature.selectSelectedContact({ contacts, router } as never)).toBeNull();
+  });
+
+  it('matches contacts that lack optional fields', () => {
+    const bare = { id: '9', firstName: 'Zed', surname: 'Q', address: {} } as Contact;
+    const contacts = contactsFeature.reducer(
+      contactsFeature.reducer(initialState, ContactsApiActions.loadSuccess({ contacts: [bare] })),
+      ContactListPageActions.searchChanged({ query: 'nomatch' }),
+    );
+
+    expect(contactsFeature.selectFilteredContacts({ contacts }).map((c) => c.id)).toEqual([]);
+  });
+
+  it('matchesQuery accepts everything for an empty query', () => {
+    expect(matchesQuery({ id: '1' } as Contact, '  ')).toBe(true);
   });
 });

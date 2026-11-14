@@ -26,9 +26,18 @@ build) and e2e jobs. On `main`, once those pass, it then:
 - builds the coverage badges (ReportGenerator) and the demo GIF (`e2e/ContactHub.Demo`, ffmpeg), and
   pushes them to the orphan `badges` branch from a single job.
 
-Backend coverage combines `ContactHub.Api.Tests` (coverlet.msbuild) and `ContactHub.Api.Integration.Tests`
-(`--collect "XPlat Code Coverage"`). Frontend coverage is reported separately
-(`npm run test:coverage`).
+Coverage is reported per suite, one pair of badges (line, branch) each at
+`badges/coverage/<app>/<suite>/{line,branch}.svg` on the `badges` branch: backend unit
+(`ContactHub.Api.Tests`, coverlet.msbuild), backend integration (`ContactHub.Api.Integration.Tests`,
+`--collect "XPlat Code Coverage"`), backend e2e, frontend unit (`npm run test:coverage`) and frontend e2e.
+Backend reports are filtered to `+ContactHub.*;-ContactHub.*Tests*;-ContactHub.E2E*`.
+
+The e2e job sets `E2E_COVERAGE=true`. The backend then runs under `dotnet-coverage collect` (installed
+as a global tool; Cobertura at `e2e/artifacts/coverage/backend/`, written when the suite shuts the
+session down), and every Playwright page records V8 coverage over CDP into
+`e2e/artifacts/coverage/frontend/raw/`. `npm run coverage:e2e` converts that to
+`cobertura-coverage.xml`. Both are uploaded as the `e2e-coverage` artifact for the `coverage` job.
+Local runs without the variable are unchanged.
 
 ## Hosted on Render
 
@@ -62,7 +71,7 @@ To set it up in another account:
 ## Tests, coverage and demo
 
 - **Backend:** `ContactHub.Api.Tests` holds unit tests in folders per layer (`Domain/`,
-  `Application/`, `Infrastructure/`, `Api/`, `Architecture/`) and fails below 95% line or branch
+  `Application/`, `Infrastructure/`, `Api/`, `Architecture/`) and fails below 100% line or branch
   coverage (coverlet). `ContactHub.Api.Integration.Tests` runs the API in memory through
   `WebApplicationFactory`.
 - **Frontend:** Vitest covers the reducer, selectors, effects, API service, validators and

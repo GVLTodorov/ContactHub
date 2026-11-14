@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { FormGroup, ValidationErrors } from '@angular/forms';
 import { Contact } from '../../api/contacts-api';
 import { ContactForm, ContactFormValue } from './contact-form';
 
@@ -123,5 +124,34 @@ describe('ContactForm', () => {
     fixture.detectChanges();
     expect(el.textContent).toContain('City is unknown.');
     expect(el.textContent).toContain('Too odd.');
+  });
+
+  it('lists server errors that match no field', async () => {
+    const { fixture, el } = await setup();
+    fixture.componentRef.setInput('serverErrors', { unknownField: ['Something general.'] });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(el.textContent).toContain('Something general.');
+  });
+
+  it('shows max length, custom and generic validator messages', async () => {
+    const { fixture, el } = await setup();
+    const form = (fixture.componentInstance as unknown as { form: FormGroup }).form;
+    const field = (name: string, errors: ValidationErrors) => {
+      const control = form.get(name)!;
+      control.setErrors(errors);
+      control.markAsTouched();
+    };
+    field('firstName', { maxlength: { requiredLength: 5, actualLength: 9 } });
+    field('surname', { custom: 'Custom message.' });
+    field('phoneNumber', { other: true });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(el.textContent).toContain('At most 5 characters.');
+    expect(el.textContent).toContain('Custom message.');
+    expect(el.textContent).toContain('Invalid value.');
   });
 });

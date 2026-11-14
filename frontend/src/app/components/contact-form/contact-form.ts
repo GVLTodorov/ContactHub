@@ -1,9 +1,9 @@
 import { Component, computed, effect, input, output, signal } from '@angular/core';
 import {
-  AbstractControl,
   FormControl,
   FormGroup,
   ReactiveFormsModule,
+  ValidationErrors,
   Validators,
 } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -134,11 +134,10 @@ export class ContactForm {
     const control = this.form.get(path);
     if (!control?.errors) return [];
     if (!(control.touched || control.dirty || this.submitAttempted())) return [];
-    return this.messagesOf(control);
+    return this.messagesOf(control.errors);
   }
 
-  private messagesOf(control: AbstractControl): string[] {
-    const errors = control.errors ?? {};
+  private messagesOf(errors: ValidationErrors): string[] {
     return Object.entries(errors).map(([key, value]) => {
       if (key === 'required') return 'This field is required.';
       if (key === 'maxlength') return `At most ${(value as { requiredLength: number }).requiredLength} characters.`;
