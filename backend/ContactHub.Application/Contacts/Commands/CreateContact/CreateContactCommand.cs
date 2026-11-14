@@ -6,8 +6,6 @@ public record CreateContactCommand(
     string? FirstName,
     string? Surname,
     DateOnly? DateOfBirth,
-    CreateAddress? Address,
+    AddressInput? Address,
     string? PhoneNumber,
-    string? Iban) : ICommand<ContactDto>;
-
-public record CreateAddress(string? Street, string? PostalCode, string? City, string? Country);
+    string? Iban) : ICommand<ContactDto>, IContactInput;

@@ -62,6 +62,9 @@ public abstract class ApiFactoryTestBase
         },
         ["phoneNumber"] = "+49 30 123456",
         ["iban"] = "DE89 3704 0044 0532 0130 00",
+
+        // Used by PUT (a new contact is at version 1); POST ignores it.
+        ["version"] = 1,
     };
 }
 

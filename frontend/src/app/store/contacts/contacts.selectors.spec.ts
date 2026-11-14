@@ -1,5 +1,5 @@
 import { Contact } from '../../api/contacts-api';
-import { ContactsApiActions, ContactsPageActions } from './contacts.actions';
+import { ContactListPageActions, ContactsApiActions } from './contacts.actions';
 import { contactsFeature, initialState } from './contacts.reducer';
 
 describe('contacts selectors', () => {
@@ -58,7 +58,7 @@ describe('contacts selectors', () => {
     const stateWith = (query: string) => {
       const contacts = contactsFeature.reducer(
         contactsFeature.reducer(initialState, ContactsApiActions.loadSuccess({ contacts: [a, b] })),
-        ContactsPageActions.searchChanged({ query }),
+        ContactListPageActions.searchChanged({ query }),
       );
       return { contacts };
     };

@@ -29,7 +29,10 @@ API with SQLite and an Angular UI. It is hosted on [Render](https://render.com) 
 - List, view, create, edit and delete contacts, stored in SQLite. No accounts.
 - One search box filters by name, phone, IBAN or city, plus column sorting and paging.
 - Validation in the browser, on each request and in the domain model (IBAN length per country and mod-97 checksum, phone
-  format, date of birth range). Server errors show under the matching field.
+  format, date of birth range). Server errors show under the matching field. The browser's limits live in one JSON file
+  that a backend test keeps in step with the domain.
+- Optimistic concurrency: each contact has a `version`; saving an edit based on an outdated version returns
+  `409 Conflict` instead of silently overwriting someone else's change.
 - Responsive: on narrow screens the table collapses to stacked rows.
 
 **Stack:** ASP.NET Core Web API (controllers, EF Core + SQLite, FluentValidation, hand-rolled CQRS,
@@ -47,7 +50,7 @@ tests, Docker Compose and GitHub Actions.
 | Whole stack | `docker compose up --build` | Backend on 8080, frontend on 4700 |
 | Backend tests | `cd backend && dotnet test` | NUnit unit tests (95% coverage gate) and integration tests |
 | Frontend tests | `cd frontend && npm test -- --watch=false` | Vitest |
-| E2E test | `dotnet run --project e2e/ContactHub.E2E` (repo root) | Playwright; starts the stack itself (first time: add `-- install chromium`) |
+| E2E tests | `dotnet test e2e/ContactHub.E2E` (repo root) | NUnit + Playwright, 41 user flows; starts the stack itself (first time: `dotnet build e2e/ContactHub.E2E`, then `pwsh e2e/ContactHub.E2E/bin/Debug/net10.0/playwright.ps1 install chromium`) |
 | Demo video | `dotnet run --project e2e/ContactHub.Demo` (repo root) | Records `e2e/artifacts/demo/demo.webm` |
 | Lint | `cd backend && dotnet format --verify-no-changes` · `cd frontend && npm run lint` | |
 
@@ -67,7 +70,8 @@ ContactHub.Api → ContactHub.Infrastructure → ContactHub.Application → Cont
 - **Application:** commands and queries with their handlers and request validators. Handlers use
   `IAppDbContext`, never Infrastructure.
 - **Infrastructure:** `AppDbContext`, EF configurations, migrations and the demo data seeder.
-- **Api:** thin controllers and exception handlers that map errors to `400`/`404` problem details.
+- **Api:** thin controllers that map HTTP request records to commands, and exception handlers that map errors to
+  `400`/`404`/`409` problem details.
 
 Architecture tests (NetArchTest) fail the build if a layer references the wrong one. The frontend
 uses an ngrx store (actions → effects → API → reducer → selectors read as signals).
@@ -80,7 +84,7 @@ A full checklist with line links and how to verify each item: [QA](docs/qa.md).
 
 | Requirement | Where |
 | --- | --- |
-| Data persisted | `backend/ContactHub.Infrastructure/DependencyInjection.cs` (SQLite path), `backend/ContactHub.Api/Startup.cs` (`Database.Migrate()`), `compose.yml` (`dbdata` volume) |
+| Data persisted | `backend/ContactHub.Infrastructure/DependencyInjection.cs` (SQLite path), `backend/ContactHub.Api/Program.cs` (`Database.Migrate()`), `compose.yml` (`dbdata` volume) |
 | EF Core | `backend/ContactHub.Infrastructure/Persistence/` (`AppDbContext.cs`, `Configurations/`, `Migrations/`) |
 | FluentValidation (models) | `backend/ContactHub.Application/Contacts/Commands/*/…Validator.cs`, `backend/ContactHub.Application/Behaviors/ValidationCommandHandlerDecorator.cs` |
 | FluentValidation (entities) | `backend/ContactHub.Domain/Entities/Contact.cs` (`ContactValidator`), `backend/ContactHub.Domain/ValueObjects/Address.cs` (`AddressValidator`) |

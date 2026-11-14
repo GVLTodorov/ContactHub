@@ -32,7 +32,7 @@ public class MigrationTests
 
         context.Database.Migrate();
 
-        Assert.That(context.Database.GetAppliedMigrations().Count(), Is.EqualTo(2));
+        Assert.That(context.Database.GetAppliedMigrations().Count(), Is.EqualTo(3));
         Assert.That(TableExists(context), Is.True);
 
         var migrator = context.GetService<IMigrator>();
@@ -49,7 +49,7 @@ public class MigrationTests
         using var context = database.CreateContext();
         var assembly = context.GetService<IMigrationsAssembly>();
 
-        Assert.That(assembly.Migrations, Has.Count.EqualTo(2));
+        Assert.That(assembly.Migrations, Has.Count.EqualTo(3));
         foreach (var typeInfo in assembly.Migrations.Values)
         {
             var migration = assembly.CreateMigration(typeInfo, SqliteProvider);

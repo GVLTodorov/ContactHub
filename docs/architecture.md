@@ -32,7 +32,7 @@ backend/
 │   ├── Controllers/    ContactsController, HealthController
 │   ├── Middleware/     ValidationExceptionHandler, NotFoundExceptionHandler
 │   ├── Extensions/     SwaggerTopBar
-│   └── Program.cs, Startup.cs, appsettings*.json
+│   └── Program.cs, Contracts/, appsettings*.json
 ├── ContactHub.Api.Tests/               unit tests in Domain/, Application/, Infrastructure/, Api/, Architecture/ (+ Common/ helpers)
 └── ContactHub.Api.Integration.Tests/   HTTP endpoints via WebApplicationFactory
 ```
@@ -42,27 +42,37 @@ Namespaces follow the projects and folders (`ContactHub.Application.Contacts.Com
 `dotnet ef migrations add <Change> --project ContactHub.Infrastructure --startup-project ContactHub.Api`.
 
 - **Domain/**: the `Contact` aggregate and the value objects `Address`, `PhoneNumber` and `Iban`.
-  Setters are private. `Contact.Create(...)` is the factory, and the behaviour methods `Rename`,
-  `ChangeDateOfBirth`, `ChangeAddress`, `ChangePhoneNumber` and `ChangeIban` re-check the
-  invariants and bump `UpdatedAt` only when a value actually changes. Ids are `Guid` v7, and the
+  Setters are private. `Contact.Create(...)` is the factory. `Update(...)` replaces every editable
+  field at once, and the finer methods `Rename`, `ChangeDateOfBirth`, `ChangeAddress`,
+  `ChangePhoneNumber` and `ChangeIban` change one; all of them re-check the invariants and bump
+  `UpdatedAt` and `Version` only when a value actually changes. Ids are `Guid` v7, and the
   clock comes from an injected `TimeProvider`.
 - **Application/**: CQRS without MediatR. `ICommand<T>`, `IQuery<T>`, `ICommandHandler<,>` and
   `IQueryHandler<,>` live in `Abstractions/`. Each use case has its own folder under
   `Application/Contacts/Commands/` or `Queries/`, with one file each for the command or query, its
-  request validator and its handler. Handlers use `IAppDbContext`, never Infrastructure. Queries
-  read with `AsNoTracking`.
+  request validator and its handler. Create and update both implement `IContactInput`, so they share
+  `ContactInputValidator<T>` without one command inheriting from the other. Handlers use
+  `IAppDbContext`, never Infrastructure. Queries read with `AsNoTracking` and map with
+  `ContactDto.From`.
 - **Infrastructure/**: `Persistence/` holds `AppDbContext`, `Configurations/ContactConfiguration`
   and `Migrations/`. `Address` is an EF complex property, `PhoneNumber` and `Iban` are stored
-  through value converters, and `DateOfBirth` is a `DateOnly`.
-- **Controllers/** and **Middleware/**: thin `[ApiController]` classes. Each action takes the
-  handler via `[FromServices]`, dispatches the command or query, and maps the result to an HTTP
-  status. Two `IExceptionHandler`s in `Middleware/` map validation errors to
-  `400 ValidationProblem` and `NotFoundException` to `404 ProblemDetails`.
+  through value converters, and `DateOfBirth` is a `DateOnly`. Reads rebuild the value objects with
+  `FromTrusted`, so a rule that gets stricter later never makes stored rows unreadable. `Version`
+  is a concurrency token.
+- **Contracts/**, **Controllers/** and **Middleware/**: thin `[ApiController]` classes. Each action
+  binds an HTTP request record from `Contracts/` (`CreateContactRequest`, `UpdateContactRequest`),
+  maps it to a command (the id comes from the route), takes the handler via `[FromServices]`, and
+  maps the result to an HTTP status. Three `IExceptionHandler`s in `Middleware/` map validation
+  errors to `400 ValidationProblem`, `NotFoundException` to `404` and `ConflictException` to `409`.
+- **Optimistic concurrency:** `PUT` carries the `version` the client read. A stale version, or a
+  write that loses a race (EF `DbUpdateConcurrencyException`), becomes `409 Conflict`.
 
-Hosting uses the classic `Program` + `Startup` model. `Startup.ConfigureServices` calls
-`AddApplication()`, which scans the Application assembly, registers every handler, and wraps each
-command handler in `ValidationCommandHandlerDecorator`, and `AddInfrastructure(configuration)`,
-which registers the SQLite `AppDbContext` and exposes it as `IAppDbContext`.
+Hosting uses `WebApplication.CreateBuilder` with MVC controllers (no Minimal API endpoints).
+`Program.BuildApp` calls `AddApplication()`, which scans the Application assembly, registers every
+handler, and wraps each command handler in `ValidationCommandHandlerDecorator`, and
+`AddInfrastructure()`, which registers the SQLite `AppDbContext` (connection string read from the
+built configuration) and exposes it as `IAppDbContext`. It then applies migrations and builds the
+pipeline.
 
 ```mermaid
 flowchart LR
@@ -98,7 +108,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    P[Page / component] -->|dispatch ContactsPageActions| S[Store]
+    P[Page / component] -->|dispatch page actions| S[Store]
     S --> E[ContactsEffects]
     E -->|HttpClient| A[ContactsApi]
     A -->|ContactsApiActions success / failure| R[Reducer + entity adapter]
@@ -107,8 +117,13 @@ flowchart LR
     E -. navigation, toasts .-> UI[Router / MessageService]
 ```
 
-- **Actions** (`contacts.actions.ts`): `createActionGroup` defines page actions (opened, create,
-  update and delete submitted, search changed) and API actions (success and failure for each call).
+- **Actions** (`contacts.actions.ts`): one `createActionGroup` per source, so the devtools log
+  shows where each event came from: `ContactListPageActions`, `ContactDetailPageActions`,
+  `NewContactPageActions`, `EditContactPageActions` (opened, retry, search changed, create or
+  update submitted, delete confirmed) and `ContactsApiActions` (success and failure for each call).
+- **Edit form:** the edit page shows the cached contact at once and re-fetches it. The form keeps
+  what the user typed when the refreshed copy arrives, and submits the `version` it was filled
+  from, so a real concurrent change surfaces as the API's `409` message instead of being lost.
 - **Effects** (`contacts.effects.ts`): call the typed `ContactsApi` (`src/app/api/contacts-api.ts`)
   and dispatch the API actions. Navigation and toasts are non-dispatching effects.
 - **Reducer** (`contacts.reducer.ts`): a `createFeature` with an `@ngrx/entity` adapter (sorted by

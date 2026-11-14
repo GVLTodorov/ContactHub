@@ -111,6 +111,34 @@ public class ExceptionHandlerTests
     }
 
     [Test]
+    public async Task Conflict_Writes409ProblemDetails()
+    {
+        var handler = new ConflictExceptionHandler(_provider.GetRequiredService<IProblemDetailsService>());
+        var context = NewContext();
+        var id = Guid.NewGuid();
+
+        var handled = await handler.TryHandleAsync(context, ConflictException.ChangedByOthers("Contact", id), CancellationToken.None);
+        var body = await BodyAsync(context);
+
+        Assert.That(handled, Is.True);
+        Assert.That(context.Response.StatusCode, Is.EqualTo(409));
+        Assert.That(body.GetProperty("title").GetString(), Is.EqualTo("Conflict"));
+        Assert.That(body.GetProperty("detail").GetString(), Does.Contain(id.ToString()));
+    }
+
+    [Test]
+    public async Task Conflict_OtherException_IsNotHandled()
+    {
+        var handler = new ConflictExceptionHandler(_provider.GetRequiredService<IProblemDetailsService>());
+        var context = NewContext();
+
+        var handled = await handler.TryHandleAsync(context, new InvalidOperationException(), CancellationToken.None);
+
+        Assert.That(handled, Is.False);
+        Assert.That(context.Response.StatusCode, Is.EqualTo(200));
+    }
+
+    [Test]
     public async Task NotFound_OtherException_IsNotHandled()
     {
         var handler = new NotFoundExceptionHandler(_provider.GetRequiredService<IProblemDetailsService>());

@@ -7,7 +7,7 @@ namespace ContactHub.Domain.ValueObjects;
 public sealed partial record Iban
 {
     /// <summary>Total IBAN length per country, from the SWIFT IBAN registry.</summary>
-    private static readonly Dictionary<string, int> CountryLengths = new()
+    public static readonly IReadOnlyDictionary<string, int> CountryLengths = new Dictionary<string, int>
     {
         ["AD"] = 24,
         ["AE"] = 23,
@@ -118,6 +118,12 @@ public sealed partial record Iban
 
         return new Iban(normalized);
     }
+
+    /// <summary>
+    /// Rebuilds an IBAN that was valid when it was stored, without checking today's rules, so a
+    /// stricter rule never makes existing rows unreadable. For persistence only.
+    /// </summary>
+    public static Iban FromTrusted(string value) => new(value);
 
     /// <summary>Groups of four characters, e.g. <c>DE89 3704 0044 0532 0130 00</c>.</summary>
     public string ToFormatted() =>

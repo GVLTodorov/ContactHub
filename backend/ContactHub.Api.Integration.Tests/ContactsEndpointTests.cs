@@ -186,6 +186,40 @@ public class ContactsEndpointTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task Put_ReturnsNextVersion_AndStaleVersionGets409()
+    {
+        var id = await CreateContactIdAsync();
+
+        var first = await Client.PutAsJsonAsync($"/api/contacts/{id}", ValidBody("Grace", "Hopper"));
+        var firstJson = await first.Content.ReadFromJsonAsync<JsonElement>();
+
+        Assert.That(firstJson.GetProperty("version").GetInt32(), Is.EqualTo(2));
+
+        var stale = await Client.PutAsJsonAsync($"/api/contacts/{id}", ValidBody("Other", "Writer"));
+        var problem = await stale.Content.ReadFromJsonAsync<JsonElement>();
+        var fetched = await Client.GetFromJsonAsync<JsonElement>($"/api/contacts/{id}");
+
+        Assert.That(stale.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
+        Assert.That(problem.GetProperty("status").GetInt32(), Is.EqualTo(409));
+        Assert.That(problem.GetProperty("detail").GetString(), Does.Contain("changed by someone else"));
+        Assert.That(fetched.GetProperty("firstName").GetString(), Is.EqualTo("Grace"));
+    }
+
+    [Test]
+    public async Task Put_WithoutVersion_Returns400()
+    {
+        var id = await CreateContactIdAsync();
+        var body = ValidBody();
+        body.Remove("version");
+
+        var response = await Client.PutAsJsonAsync($"/api/contacts/{id}", body);
+        var keys = await ErrorKeysAsync(response);
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        Assert.That(keys, Is.EqualTo(new[] { "version" }));
+    }
+
+    [Test]
     public async Task Put_Unknown_Returns404ProblemDetails()
     {
         var response = await Client.PutAsJsonAsync($"/api/contacts/{Guid.NewGuid()}", ValidBody());

@@ -42,13 +42,14 @@ public class ProgramTests
     }
 
     [Test]
-    public void CreateHostBuilder_BuildsHostWithStartupServices()
+    public async Task BuildApp_RegistersServicesAndMigratesDatabase()
     {
         ApiFactoryTestBase.ResetTestDatabase();
 
-        using var host = Program.CreateHostBuilder(["--environment", "Testing"]).Build();
+        await using var app = Program.BuildApp(["--environment", "Testing"]);
 
-        Assert.That(host.Services.GetService<TimeProvider>(), Is.Not.Null);
+        Assert.That(app.Services.GetService<TimeProvider>(), Is.Not.Null);
+        Assert.That(File.Exists(Path.Combine(AppContext.BaseDirectory, "database", "contacthub_test.db")), Is.True);
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
     }
 

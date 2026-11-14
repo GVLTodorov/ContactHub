@@ -23,6 +23,9 @@ public class Contact
     public DateTime CreatedAt { get; private set; }
     public DateTime UpdatedAt { get; private set; }
 
+    /// <summary>Starts at 1 and goes up on every real change; used for optimistic concurrency.</summary>
+    public int Version { get; private set; }
+
     public static Contact Create(
         string? firstName,
         string? surname,
@@ -43,10 +46,30 @@ public class Contact
             Iban = iban,
             CreatedAt = utcNow,
             UpdatedAt = utcNow,
+            Version = 1,
         };
         contact.EnsureValid(utcNow);
         return contact;
     }
+
+    /// <summary>Replaces every editable field at once, checking the invariants a single time.</summary>
+    public void Update(
+        string? firstName,
+        string? surname,
+        DateOnly dateOfBirth,
+        Address address,
+        PhoneNumber phoneNumber,
+        Iban iban,
+        DateTime utcNow) =>
+        Change(utcNow, () =>
+        {
+            FirstName = firstName?.Trim() ?? string.Empty;
+            Surname = surname?.Trim() ?? string.Empty;
+            DateOfBirth = dateOfBirth;
+            Address = address;
+            PhoneNumber = phoneNumber;
+            Iban = iban;
+        });
 
     public void Rename(string? firstName, string? surname, DateTime utcNow) =>
         Change(utcNow, () =>
@@ -88,6 +111,7 @@ public class Contact
         }
 
         UpdatedAt = utcNow;
+        Version++;
     }
 
     private void EnsureValid(DateTime utcNow)

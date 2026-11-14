@@ -36,6 +36,21 @@ public class DomainTests
         Assert.That(() => Iban.Create(raw), Throws.TypeOf<DomainValidationException>());
     }
 
+    [Test]
+    public void FromTrusted_KeepsStoredValuesThatTodaysRulesReject()
+    {
+        Assert.That(Iban.FromTrusted("XX00").Value, Is.EqualTo("XX00"));
+        Assert.That(PhoneNumber.FromTrusted("12").Value, Is.EqualTo("12"));
+    }
+
+    [Test]
+    public void PhoneNumber_DigitLimitsAreInclusive()
+    {
+        Assert.That(PhoneNumber.IsValid("+" + new string('1', PhoneNumber.MinDigits)), Is.True);
+        Assert.That(PhoneNumber.IsValid(new string('1', PhoneNumber.MaxDigits)), Is.True);
+        Assert.That(PhoneNumber.IsValid("+"), Is.False);
+    }
+
     [TestCase("+49 (30) 123-4567", "+49301234567")]
     [TestCase("030.123.4567", "0301234567")]
     public void PhoneNumber_Valid_IsNormalized(string raw, string expected)
@@ -148,6 +163,71 @@ public class DomainTests
         c.ChangeIban(Iban.Create("GB82WEST12345698765432"), later5);
         Assert.That(c.UpdatedAt, Is.EqualTo(later5));
         Assert.That(c.CreatedAt, Is.EqualTo(Now));
+    }
+
+    [Test]
+    public void Create_StartsAtVersionOne()
+    {
+        var c = NewContact("Ada", "Lovelace", new DateOnly(1990, 1, 1));
+
+        Assert.That(c.Version, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Update_ReplacesEveryFieldAndBumpsVersionOnce()
+    {
+        var c = NewContact("Ada", "Lovelace", new DateOnly(1990, 1, 1));
+
+        c.Update(
+            " Grace ",
+            "Hopper",
+            new DateOnly(1985, 5, 5),
+            Address.Create("Other St 2", "20095", "Hamburg", "Germany"),
+            PhoneNumber.Create("+4940999999"),
+            Iban.Create("GB82WEST12345698765432"),
+            Later);
+
+        Assert.That(c.FirstName, Is.EqualTo("Grace"));
+        Assert.That(c.DateOfBirth, Is.EqualTo(new DateOnly(1985, 5, 5)));
+        Assert.That(c.Address.City, Is.EqualTo("Hamburg"));
+        Assert.That(c.PhoneNumber.Value, Is.EqualTo("+4940999999"));
+        Assert.That(c.Iban.Value, Is.EqualTo("GB82WEST12345698765432"));
+        Assert.That(c.UpdatedAt, Is.EqualTo(Later));
+        Assert.That(c.Version, Is.EqualTo(2));
+    }
+
+    [Test]
+    public void Update_WithSameValues_KeepsVersionAndUpdatedAt()
+    {
+        var c = NewContact("Ada", "Lovelace", new DateOnly(1990, 1, 1));
+
+        c.Update("Ada", "Lovelace", new DateOnly(1990, 1, 1), ValidAddress(), PhoneNumber.Create("+4930123456"), Iban.Create(ValidIban), Later);
+
+        Assert.That(c.Version, Is.EqualTo(1));
+        Assert.That(c.UpdatedAt, Is.EqualTo(Now));
+    }
+
+    [Test]
+    public void Update_Invalid_ThrowsAndKeepsStateAndVersion()
+    {
+        var c = NewContact("Ada", "Lovelace", new DateOnly(1990, 1, 1));
+
+        Assert.That(
+            () => c.Update("Grace", " ", new DateOnly(1985, 5, 5), ValidAddress(), PhoneNumber.Create("+4930123456"), Iban.Create(ValidIban), Later),
+            Throws.TypeOf<DomainValidationException>());
+        Assert.That(c.FirstName, Is.EqualTo("Ada"));
+        Assert.That(c.Version, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Update_NullNames_AreRejected()
+    {
+        var c = NewContact("Ada", "Lovelace", new DateOnly(1990, 1, 1));
+
+        var ex = Assert.Throws<DomainValidationException>(
+            () => c.Update(null, null, new DateOnly(1990, 1, 1), ValidAddress(), PhoneNumber.Create("+4930123456"), Iban.Create(ValidIban), Later))!;
+
+        Assert.That(ex.Errors.Keys, Is.EquivalentTo(new[] { "firstName", "surname" }));
     }
 
     [Test]

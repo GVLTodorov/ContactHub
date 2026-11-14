@@ -67,8 +67,12 @@ To set it up in another account:
   `WebApplicationFactory`.
 - **Frontend:** Vitest covers the reducer, selectors, effects, API service, validators and
   components. `npm run test:coverage` also writes `coverage/frontend/cobertura-coverage.xml`.
-- **E2E:** `e2e/ContactHub.E2E` is a .NET console app using Microsoft.Playwright (Chromium). It
-  starts the backend and the dev server itself and exits non-zero on failure. Lint it with
+- **E2E:** `e2e/ContactHub.E2E` is an NUnit test project using Microsoft.Playwright (Chromium), run
+  with `dotnet test e2e/ContactHub.E2E`. It covers every user flow (41 flows, 50 test cases, listed
+  in [QA](qa.md#9-playwright-e2e-test)). A `[SetUpFixture]` starts the backend and the dev server
+  once; on failure the test saves a screenshot and a Playwright trace to `e2e/artifacts/` and
+  attaches them to the result. Install the browser once after a build with
+  `pwsh e2e/ContactHub.E2E/bin/Debug/net10.0/playwright.ps1 install chromium`. Lint it with
   `cd e2e && dotnet format --verify-no-changes`.
 - **Demo:** `e2e/ContactHub.Demo` is a separate Playwright recorder with no assertions. It starts
   the stack with demo contacts and records Swagger's Client button, search, copy, create, edit and

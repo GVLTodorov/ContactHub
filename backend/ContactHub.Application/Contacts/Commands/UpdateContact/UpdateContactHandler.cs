@@ -13,16 +13,29 @@ public class UpdateContactHandler(IAppDbContext db, TimeProvider timeProvider)
         var found = await db.Contacts.FirstOrDefaultAsync(c => c.Id == command.Id, cancellationToken);
 
         var contact = found ?? throw new NotFoundException("Contact", command.Id);
+        if (contact.Version != command.Version)
+        {
+            throw ConflictException.ChangedByOthers("Contact", command.Id);
+        }
 
-        var now = timeProvider.GetUtcNow().UtcDateTime;
-        var address = command.Address!;
-        contact.Rename(command.FirstName, command.Surname, now);
-        contact.ChangeDateOfBirth(command.DateOfBirth!.Value, now);
-        contact.ChangeAddress(Address.Create(address.Street, address.PostalCode, address.City, address.Country), now);
-        contact.ChangePhoneNumber(PhoneNumber.Create(command.PhoneNumber), now);
-        contact.ChangeIban(Iban.Create(command.Iban), now);
+        contact.Update(
+            command.FirstName,
+            command.Surname,
+            command.DateOfBirth!.Value,
+            command.Address!.ToAddress(),
+            PhoneNumber.Create(command.PhoneNumber),
+            Iban.Create(command.Iban),
+            timeProvider.GetUtcNow().UtcDateTime);
 
-        await db.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Someone saved between our read and our write; Version is the concurrency token.
+            throw ConflictException.ChangedByOthers("Contact", command.Id);
+        }
 
         return ContactDto.From(contact);
     }

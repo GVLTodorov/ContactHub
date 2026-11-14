@@ -2,7 +2,13 @@ import { createEntityAdapter, EntityAdapter, EntityState } from '@ngrx/entity';
 import { getRouterSelectors } from '@ngrx/router-store';
 import { createFeature, createReducer, createSelector, on } from '@ngrx/store';
 import { Contact } from '../../api/contacts-api';
-import { ContactsApiActions, ContactsPageActions } from './contacts.actions';
+import {
+  ContactDetailPageActions,
+  ContactListPageActions,
+  ContactsApiActions,
+  EditContactPageActions,
+  NewContactPageActions,
+} from './contacts.actions';
 
 export type Status = 'idle' | 'loading' | 'success' | 'error';
 
@@ -52,12 +58,12 @@ export const contactsFeature = createFeature({
   name: 'contacts',
   reducer: createReducer(
     initialState,
-    on(ContactsPageActions.opened, ContactsPageActions.retry, (state) => ({
+    on(ContactListPageActions.opened, ContactListPageActions.retry, (state) => ({
       ...state,
       loadStatus: 'loading' as const,
       error: null,
     })),
-    on(ContactsPageActions.searchChanged, (state, { query }) => ({ ...state, query })),
+    on(ContactListPageActions.searchChanged, (state, { query }) => ({ ...state, query })),
     on(ContactsApiActions.loadSuccess, (state, { contacts }) =>
       adapter.setAll(contacts, { ...state, loadStatus: 'success' as const, error: null }),
     ),
@@ -66,13 +72,21 @@ export const contactsFeature = createFeature({
       loadStatus: 'error' as const,
       error: error.message,
     })),
-    on(ContactsPageActions.formOpened, (state) => ({
+    on(NewContactPageActions.opened, (state) => ({
       ...state,
       saveStatus: 'idle' as const,
       error: null,
       fieldErrors: {},
     })),
-    on(ContactsPageActions.createSubmitted, (state) => ({
+    on(EditContactPageActions.opened, (state) => ({
+      ...state,
+      saveStatus: 'idle' as const,
+      error: null,
+      fieldErrors: {},
+      detailStatus: 'loading' as const,
+      detailError: null,
+    })),
+    on(NewContactPageActions.createSubmitted, (state) => ({
       ...state,
       saveStatus: 'loading' as const,
       error: null,
@@ -87,7 +101,7 @@ export const contactsFeature = createFeature({
       error: error.message,
       fieldErrors: error.fieldErrors,
     })),
-    on(ContactsPageActions.detailOpened, (state) => ({
+    on(ContactDetailPageActions.opened, ContactDetailPageActions.retry, (state) => ({
       ...state,
       detailStatus: 'loading' as const,
       detailError: null,
@@ -100,7 +114,7 @@ export const contactsFeature = createFeature({
       detailStatus: notFound ? ('notFound' as const) : ('error' as const),
       detailError: notFound ? null : error.message,
     })),
-    on(ContactsPageActions.updateSubmitted, (state) => ({
+    on(EditContactPageActions.updateSubmitted, (state) => ({
       ...state,
       saveStatus: 'loading' as const,
       error: null,

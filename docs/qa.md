@@ -44,9 +44,9 @@ contact shows them on its detail page.
 
 | What | Where |
 | --- | --- |
-| SQLite database file, path resolved against the app folder | [ContactHub.Infrastructure/DependencyInjection.cs:16-19](../backend/ContactHub.Infrastructure/DependencyInjection.cs#L16-L19) |
-| Migrations applied at startup (`Database.Migrate()`) | [ContactHub.Api/Startup.cs:35](../backend/ContactHub.Api/Startup.cs#L35) |
-| Optional demo data (`SeedDemoData`) | [Startup.cs:37](../backend/ContactHub.Api/Startup.cs#L37), [DemoDataSeeder.cs](../backend/ContactHub.Infrastructure/Persistence/DemoDataSeeder.cs) |
+| SQLite database file, path resolved against the app folder | [ContactHub.Infrastructure/DependencyInjection.cs:28-36](../backend/ContactHub.Infrastructure/DependencyInjection.cs#L28-L36) |
+| Migrations applied at startup (`Database.Migrate()`) | [ContactHub.Api/Program.cs:51](../backend/ContactHub.Api/Program.cs#L51) |
+| Optional demo data (`SeedDemoData`) | [Program.cs:53](../backend/ContactHub.Api/Program.cs#L53), [DemoDataSeeder.cs](../backend/ContactHub.Infrastructure/Persistence/DemoDataSeeder.cs) |
 | Docker Compose named volume `dbdata` on `/app/database` | [compose.yml:12](../compose.yml#L12), [compose.yml:26](../compose.yml#L26) |
 | Image creates the writable database folder | [Dockerfile:10](../Dockerfile#L10) |
 
@@ -60,8 +60,8 @@ each deploy by design, because its disk is ephemeral.
 | What | Where |
 | --- | --- |
 | `AppDbContext` with `DbSet<Contact>` | [AppDbContext.cs:7-12](../backend/ContactHub.Infrastructure/Persistence/AppDbContext.cs#L7-L12) |
-| `UseSqlite` registration | [ContactHub.Infrastructure/DependencyInjection.cs:19](../backend/ContactHub.Infrastructure/DependencyInjection.cs#L19) |
-| Entity mapping: complex property for `Address`, value converters for `PhoneNumber` and `Iban` | [ContactConfiguration.cs:14-31](../backend/ContactHub.Infrastructure/Persistence/Configurations/ContactConfiguration.cs#L14-L31) |
+| `UseSqlite` registration | [ContactHub.Infrastructure/DependencyInjection.cs:17](../backend/ContactHub.Infrastructure/DependencyInjection.cs#L17) |
+| Entity mapping: complex property for `Address`, value converters for `PhoneNumber` and `Iban` (rebuilt with `FromTrusted`, so stricter rules never break reads), `Version` as concurrency token | [ContactConfiguration.cs:14-40](../backend/ContactHub.Infrastructure/Persistence/Configurations/ContactConfiguration.cs#L14-L40) |
 | Migrations | [Persistence/Migrations/](../backend/ContactHub.Infrastructure/Persistence/Migrations/) |
 | Queries and writes through EF Core (via `IAppDbContext`) | [GetContactsHandler.cs](../backend/ContactHub.Application/Contacts/Queries/GetContacts/GetContactsHandler.cs), [CreateContactHandler.cs](../backend/ContactHub.Application/Contacts/Commands/CreateContact/CreateContactHandler.cs) |
 
@@ -73,8 +73,8 @@ each deploy by design, because its disk is ephemeral.
 
 | What | Where |
 | --- | --- |
-| Create command validator, including the nested address validator | [CreateContactValidator.cs:7-40](../backend/ContactHub.Application/Contacts/Commands/CreateContact/CreateContactValidator.cs#L7-L40) |
-| Update command validator (shares the rules) | [UpdateContactValidator.cs:5](../backend/ContactHub.Application/Contacts/Commands/UpdateContact/UpdateContactValidator.cs#L5) |
+| Shared rules for create and update (`IContactInput`), including the nested address validator | [ContactInputValidator.cs:8-39](../backend/ContactHub.Application/Contacts/Commands/ContactInputValidator.cs#L8-L39), [CreateContactValidator.cs](../backend/ContactHub.Application/Contacts/Commands/CreateContact/CreateContactValidator.cs) |
+| Update command validator (shared rules plus a required `version`) | [UpdateContactValidator.cs:10](../backend/ContactHub.Application/Contacts/Commands/UpdateContact/UpdateContactValidator.cs#L10) |
 | Decorator that runs the validators before every command handler | [ValidationCommandHandlerDecorator.cs:8-18](../backend/ContactHub.Application/Behaviors/ValidationCommandHandlerDecorator.cs#L8-L18) |
 | Validator and decorator registration | [ContactHub.Application/DependencyInjection.cs:13-28](../backend/ContactHub.Application/DependencyInjection.cs#L13-L28) |
 | Validation errors mapped to `400 ValidationProblem` | [ValidationExceptionHandler.cs](../backend/ContactHub.Api/Middleware/ValidationExceptionHandler.cs) |
@@ -83,8 +83,8 @@ each deploy by design, because its disk is ephemeral.
 
 | What | Where |
 | --- | --- |
-| `ContactValidator : AbstractValidator<Contact>` | [Contact.cs:103-115](../backend/ContactHub.Domain/Entities/Contact.cs#L103-L115) |
-| Run on every create and change; throws `DomainValidationException` | [Contact.cs:93-100](../backend/ContactHub.Domain/Entities/Contact.cs#L93-L100) |
+| `ContactValidator : AbstractValidator<Contact>` | [Contact.cs:127-141](../backend/ContactHub.Domain/Entities/Contact.cs#L127-L141) |
+| Run on every create and change; throws `DomainValidationException` | [Contact.cs:117-124](../backend/ContactHub.Domain/Entities/Contact.cs#L117-L124) |
 | `AddressValidator : AbstractValidator<Address>` | [Address.cs:42-49](../backend/ContactHub.Domain/ValueObjects/Address.cs#L42-L49) |
 
 **How to check:** in Swagger, `POST /api/contacts` with an invalid IBAN (for example
@@ -102,7 +102,8 @@ Implemented by hand (no MediatR). Commands change state, and queries only read (
 | Commands: Create, Update, Delete (command, validator, handler per folder) | [Contacts/Commands/](../backend/ContactHub.Application/Contacts/Commands/) |
 | Queries: GetContacts, GetContactById | [Contacts/Queries/](../backend/ContactHub.Application/Contacts/Queries/) |
 | Controller dispatches commands and queries to handlers (`[FromServices]`) | [ContactsController.cs](../backend/ContactHub.Api/Controllers/ContactsController.cs) |
-| `PUT` body is a separate HTTP contract, mapped to `UpdateContactCommand` | [UpdateContactRequest.cs](../backend/ContactHub.Api/Contracts/UpdateContactRequest.cs) |
+| `POST` and `PUT` bodies are HTTP request records, mapped to `CreateContactCommand` / `UpdateContactCommand` | [ContactRequests.cs](../backend/ContactHub.Api/Contracts/ContactRequests.cs) |
+| Stale `version` on `PUT` returns `409 Conflict` | [UpdateContactHandler.cs](../backend/ContactHub.Application/Contacts/Commands/UpdateContact/UpdateContactHandler.cs), [ConflictExceptionHandler.cs](../backend/ContactHub.Api/Middleware/ConflictExceptionHandler.cs) |
 
 **Endpoints:**
 
@@ -121,11 +122,11 @@ Implemented by hand (no MediatR). Commands change state, and queries only read (
 
 | What | Where |
 | --- | --- |
-| Private setters: state changes only through methods | [Contact.cs:16-24](../backend/ContactHub.Domain/Entities/Contact.cs#L16-L24) |
-| Factory `Contact.Create(...)` that validates invariants | [Contact.cs:26-49](../backend/ContactHub.Domain/Entities/Contact.cs#L26-L49) |
-| Behaviour methods `Rename`, `ChangeDateOfBirth`, `ChangeAddress`, `ChangePhoneNumber`, `ChangeIban` | [Contact.cs:51-68](../backend/ContactHub.Domain/Entities/Contact.cs#L51-L68) |
-| Change tracking: rolls back on invalid state, bumps `UpdatedAt` only on a real change | [Contact.cs:70-91](../backend/ContactHub.Domain/Entities/Contact.cs#L70-L91) |
-| Value object `Iban`: normalization, length per country (SWIFT IBAN registry, 89 countries), ISO 13616 mod-97 checksum, `ToFormatted()` | [Iban.cs](../backend/ContactHub.Domain/ValueObjects/Iban.cs) (country lengths at [line 10](../backend/ContactHub.Domain/ValueObjects/Iban.cs#L10), checks at [line 135](../backend/ContactHub.Domain/ValueObjects/Iban.cs#L135), checksum at [line 156](../backend/ContactHub.Domain/ValueObjects/Iban.cs#L156)) |
+| Private setters: state changes only through methods | [Contact.cs:16-27](../backend/ContactHub.Domain/Entities/Contact.cs#L16-L27) |
+| Factory `Contact.Create(...)` that validates invariants | [Contact.cs:29-53](../backend/ContactHub.Domain/Entities/Contact.cs#L29-L53) |
+| Behaviour methods `Update` (all fields at once), `Rename`, `ChangeDateOfBirth`, `ChangeAddress`, `ChangePhoneNumber`, `ChangeIban` | [Contact.cs:55-91](../backend/ContactHub.Domain/Entities/Contact.cs#L55-L91) |
+| Change tracking: rolls back on invalid state, bumps `UpdatedAt` and `Version` only on a real change | [Contact.cs:93-115](../backend/ContactHub.Domain/Entities/Contact.cs#L93-L115) |
+| Value object `Iban`: normalization, length per country (SWIFT IBAN registry, 89 countries), ISO 13616 mod-97 checksum, `ToFormatted()` | [Iban.cs](../backend/ContactHub.Domain/ValueObjects/Iban.cs) (country lengths at [line 10](../backend/ContactHub.Domain/ValueObjects/Iban.cs#L10), checks at [line 132](../backend/ContactHub.Domain/ValueObjects/Iban.cs#L132), checksum at [line 153](../backend/ContactHub.Domain/ValueObjects/Iban.cs#L153)) |
 | Value object `PhoneNumber`: optional `+` and 7–15 digits, normalized | [PhoneNumber.cs](../backend/ContactHub.Domain/ValueObjects/PhoneNumber.cs) |
 | Value object `Address` | [Address.cs](../backend/ContactHub.Domain/ValueObjects/Address.cs) |
 | Domain exception | [DomainValidationException.cs](../backend/ContactHub.Domain/Exceptions/DomainValidationException.cs) |
@@ -138,10 +139,10 @@ Implemented by hand (no MediatR). Commands change state, and queries only read (
 | What | Where |
 | --- | --- |
 | Store, router store, feature state and effects registered | [app.config.ts:20-23](../frontend/src/app/app.config.ts#L20-L23) |
-| Actions: `ContactsPageActions` and `ContactsApiActions` (`createActionGroup`) | [contacts.actions.ts:4](../frontend/src/app/store/contacts/contacts.actions.ts#L4), [line 18](../frontend/src/app/store/contacts/contacts.actions.ts#L18) |
+| Actions: one `createActionGroup` per source (list, detail, new and edit pages, and `ContactsApiActions`) | [contacts.actions.ts:6-55](../frontend/src/app/store/contacts/contacts.actions.ts#L6-L55) |
 | Effects: load, load one, create, update, delete, navigation, toasts | [contacts.effects.ts](../frontend/src/app/store/contacts/contacts.effects.ts) |
-| Reducer: `createFeature` with an `@ngrx/entity` adapter | [contacts.reducer.ts:35](../frontend/src/app/store/contacts/contacts.reducer.ts#L35), [line 51](../frontend/src/app/store/contacts/contacts.reducer.ts#L51) |
-| Selectors: `selectAllContacts`, `selectFilteredContacts`, `selectSelectedContact`, `selectIsEmpty` | [contacts.reducer.ts:121-132](../frontend/src/app/store/contacts/contacts.reducer.ts#L121-L132) |
+| Reducer: `createFeature` with an `@ngrx/entity` adapter | [contacts.reducer.ts:41](../frontend/src/app/store/contacts/contacts.reducer.ts#L41), [line 57](../frontend/src/app/store/contacts/contacts.reducer.ts#L57) |
+| Selectors: `selectAllContacts`, `selectFilteredContacts`, `selectSelectedContact`, `selectIsEmpty` | [contacts.reducer.ts:135-150](../frontend/src/app/store/contacts/contacts.reducer.ts#L135-L150) |
 | Components read state with `store.selectSignal(...)` | [pages/contacts/contacts.ts](../frontend/src/app/pages/contacts/contacts.ts), [contact-detail.ts](../frontend/src/app/pages/contact-detail/contact-detail.ts), [contact-edit.ts](../frontend/src/app/pages/contact-edit/contact-edit.ts), [contact-new.ts](../frontend/src/app/pages/contact-new/contact-new.ts) |
 
 **Tests:** [contacts.reducer.spec.ts](../frontend/src/app/store/contacts/contacts.reducer.spec.ts),
@@ -162,17 +163,67 @@ Theme: `providePrimeNG` with the Aura preset in [app.config.ts:26-28](../fronten
 
 ## 9. Playwright e2e test
 
+An NUnit test project using Microsoft.Playwright (Chromium) drives the real app in a browser:
+41 user flows in 50 test cases, about 1.5 minutes. Line coverage is enforced by the unit tests (95%
+gate); e2e coverage is measured by user flows instead: every flow a user can reach in the UI has a
+test below.
+
 | What | Where |
 | --- | --- |
-| Test: .NET console app using Microsoft.Playwright (Chromium) | [e2e/ContactHub.E2E/Program.cs](../e2e/ContactHub.E2E/Program.cs) |
-| Scenario: fill the New contact form, save, check the new row and formatted IBAN in the list | [Program.cs:43-59](../e2e/ContactHub.E2E/Program.cs#L43-L59) |
-| Starts the backend and frontend itself | [Servers.cs](../e2e/ContactHub.E2E/Servers.cs) |
-| Runs in CI (`e2e` job) | [ci.yml:63-78](../.github/workflows/ci.yml#L63-L78) |
+| Shared setup: one browser per fixture, a fresh context per test, test data created through the API, screenshot and trace on failure | [E2ETest.cs](../e2e/ContactHub.E2E/E2ETest.cs) |
+| Starts the backend and frontend once (`[SetUpFixture]`) | [E2ESetup.cs](../e2e/ContactHub.E2E/E2ESetup.cs), [Servers.cs](../e2e/ContactHub.E2E/Servers.cs) |
+| Runs in CI (`e2e` job) | [ci.yml:63-83](../.github/workflows/ci.yml#L63-L83) |
 
-**How to check:** from the repo root, run
-`dotnet run --project e2e/ContactHub.E2E -- install chromium` once, then
-`dotnet run --project e2e/ContactHub.E2E`. It prints `E2E PASSED` and exits with `0`. On failure
-it saves a screenshot and a trace to `e2e/artifacts/`.
+Failure states the real API cannot produce on demand (server errors, a slow API, an empty database)
+are simulated with Playwright network routing; everything else goes through the real backend.
+
+| Area | User flow | Test |
+| --- | --- | --- |
+| App shell | Home page leads to the contacts | `NavigationTests.HomePage_LeadsToTheContacts` |
+| App shell | Sidebar marks the current page; the logo goes home | `NavigationTests.Sidebar_MarksTheCurrentPage_AndTheLogoGoesHome` |
+| App shell | "New contact" button opens the form | `NavigationTests.NewContactButton_OpensTheForm` |
+| App shell | Unknown URL shows "Page not found" with a link home | `NavigationTests.UnknownRoute_ShowsPageNotFound_WithALinkHome` |
+| App shell | Footer API status: checking, online, offline | `NavigationTests.ApiStatus_ShowsChecking_WhileTheHealthCheckRuns`, `ApiStatus_IsShownInTheFooter`, `ApiStatus_ShowsOffline_WhenTheHealthCheckFails` |
+| App shell | Swagger's Client button opens the app | `NavigationTests.SwaggerClientButton_OpensTheApp` |
+| List | Every column, IBAN in groups of four | `ContactListTests.ShowsEveryColumn_WithTheFormattedIban` |
+| List | Search by name, phone, IBAN and city | `ContactListTests.Search_FindsByEachSupportedField` (4 cases) |
+| List | No matches message and "Clear search" | `ContactListTests.NoMatches_ShowsMessage_AndClearSearchRestoresTheList` |
+| List | "Clear" button empties the search box | `ContactListTests.ClearButton_EmptiesTheSearchBox` |
+| List | Search survives opening a contact and coming back | `ContactListTests.Search_IsKeptWhenComingBackFromADetailPage` |
+| List | Sorted by surname; the Name header reverses it | `ContactListTests.SortsBySurname_AndTheNameHeaderReversesIt` |
+| List | Date of birth, Phone, IBAN and City headers sort | `ContactListTests.EachColumnHeader_SortsByItsColumn` (4 cases) |
+| List | 10 rows per page, next page, 25 rows per page | `ContactListTests.Paginator_ShowsTenRowsPerPage_AndCanShowMore` |
+| List | Loading skeleton while the API is slow | `ContactListTests.SlowApi_ShowsTheLoadingSkeleton_ThenTheList` |
+| List | Empty database prompt leads to the form | `ContactListTests.EmptyDatabase_ShowsTheFirstContactPrompt` |
+| List | Load error and Retry | `ContactListTests.LoadError_ShowsTheMessage_AndRetryRecovers` |
+| List | Narrow screen stacks rows with inline labels | `MobileLayoutTests.NarrowScreen_StacksEachContactWithInlineLabels` |
+| Create | Valid contact is saved, toasted and listed | `CreateContactTests.CreatesContact_AndShowsItInTheList` |
+| Create | Empty submit shows nine required errors | `CreateContactTests.EmptySubmit_ShowsRequiredErrors_AndStaysOnTheForm` |
+| Create | Invalid IBAN and phone are flagged, then saving works | `CreateContactTests.InvalidIbanAndPhone_AreFlagged_ThenSaveWorksOnceFixed` |
+| Create | Date of birth in the future or over 150 years ago is rejected | `CreateContactTests.DateOfBirthOutOfRange_IsRejected` (2 cases) |
+| Create | Server validation errors appear under the matching field | `CreateContactTests.ServerValidationErrors_AreShownUnderTheMatchingField` |
+| Create | Cancel returns to the list | `CreateContactTests.Cancel_ReturnsToTheList` |
+| Detail | Every field, age and formatted IBAN | `ContactDetailTests.OpensFromTheList_AndShowsEveryField` |
+| Detail | Copy phone, IBAN and address to the clipboard | `ContactDetailTests.CopyButtons_PutTheValueOnTheClipboard` (3 cases) |
+| Detail | Unknown id shows "Contact not found" with a way back | `ContactDetailTests.UnknownId_ShowsNotFound_WithAWayBack` |
+| Detail | Load error and Retry | `ContactDetailTests.LoadError_ShowsTheMessage_AndRetryRecovers` |
+| Edit | Save updates the detail page and shows a toast | `EditContactTests.Save_UpdatesTheDetailPage_AndShowsAToast` |
+| Edit | Cancel returns to the detail page unchanged | `EditContactTests.Cancel_ReturnsToTheDetailPage_WithoutChanges` |
+| Edit | Invalid value is flagged and nothing is saved | `EditContactTests.InvalidValue_IsFlagged_AndNothingIsSaved` |
+| Edit | Someone else saved first: 409 message, their change kept | `EditContactTests.SomeoneElseSavedFirst_ShowsTheConflict_AndKeepsTheirChange` |
+| Edit | Typed edits survive the background refresh | `EditContactTests.TypedEdits_SurviveTheBackgroundRefresh` |
+| Edit | Load error message | `EditContactTests.LoadError_ShowsTheMessage` |
+| Edit | Unknown id shows not found with "Back to list" | `EditContactTests.UnknownId_ShowsNotFound` |
+| Delete | From the list, after confirming | `DeleteContactTests.FromTheList_AfterConfirming_RemovesTheRow` |
+| Delete | Cancelling the confirmation keeps the row | `DeleteContactTests.FromTheList_Cancelling_KeepsTheRow` |
+| Delete | Server failure shows an error toast and keeps the row | `DeleteContactTests.ServerFailure_ShowsAnErrorToast_AndKeepsTheRow` |
+| Delete | From the detail page, back to the list without it | `DeleteContactTests.FromTheDetailPage_ReturnsToTheListWithoutIt` |
+
+**How to check:** from the repo root, run `dotnet build e2e/ContactHub.E2E` and
+`pwsh e2e/ContactHub.E2E/bin/Debug/net10.0/playwright.ps1 install chromium` once, then
+`dotnet test e2e/ContactHub.E2E` (add `--filter "FullyQualifiedName~EditContactTests"` for one
+area). On failure it saves a screenshot and a Playwright trace to `e2e/artifacts/` and attaches them
+to the test result.
 
 ## 10. Git repository
 
@@ -186,7 +237,7 @@ it saves a screenshot and a trace to `e2e/artifacts/`.
 | Extra | Where |
 | --- | --- |
 | Clean Architecture, one project per layer, enforced by architecture tests | [ArchitectureTests.cs](../backend/ContactHub.Api.Tests/Architecture/ArchitectureTests.cs), [architecture.md](architecture.md) |
-| Client-side validation that mirrors the server rules (IBAN length per country and checksum, phone, date of birth) | [validators.ts](../frontend/src/app/components/contact-form/validators.ts), [iban-lengths.ts](../frontend/src/app/components/contact-form/iban-lengths.ts) |
-| Search, sorting and paging on the contact list | [contacts.html](../frontend/src/app/pages/contacts/contacts.html), [contacts.reducer.ts:124](../frontend/src/app/store/contacts/contacts.reducer.ts#L124) |
+| Client-side validation that mirrors the server rules (IBAN length per country and checksum, phone, date of birth) | [validators.ts](../frontend/src/app/components/contact-form/validators.ts), [contact-rules.json](../frontend/src/app/components/contact-form/contact-rules.json) (kept in step with the domain by [FrontendRulesTests.cs](../backend/ContactHub.Api.Tests/Domain/FrontendRulesTests.cs)) |
+| Search, sorting and paging on the contact list | [contacts.html](../frontend/src/app/pages/contacts/contacts.html), [contacts.reducer.ts:138](../frontend/src/app/store/contacts/contacts.reducer.ts#L138) |
 | Unit and integration tests with a 95% coverage gate | [ContactHub.Api.Tests/](../backend/ContactHub.Api.Tests/), [ContactHub.Api.Integration.Tests/](../backend/ContactHub.Api.Integration.Tests/) |
 | Docker image, Compose, CI/CD to Render, coverage badges, demo video | [deployment.md](deployment.md) |

@@ -2,9 +2,8 @@ import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { MessageModule } from 'primeng/message';
-import { ContactInput } from '../../api/contacts-api';
-import { ContactForm } from '../../components/contact-form/contact-form';
-import { ContactsPageActions } from '../../store/contacts/contacts.actions';
+import { ContactForm, ContactFormValue } from '../../components/contact-form/contact-form';
+import { NewContactPageActions } from '../../store/contacts/contacts.actions';
 import { contactsFeature } from '../../store/contacts/contacts.reducer';
 
 @Component({
@@ -21,11 +20,11 @@ export class ContactNew {
   protected readonly fieldErrors = this.store.selectSignal(contactsFeature.selectFieldErrors);
 
   constructor() {
-    this.store.dispatch(ContactsPageActions.formOpened());
+    this.store.dispatch(NewContactPageActions.opened());
   }
 
-  protected save(input: ContactInput): void {
-    this.store.dispatch(ContactsPageActions.createSubmitted({ input }));
+  protected save({ input }: ContactFormValue): void {
+    this.store.dispatch(NewContactPageActions.createSubmitted({ input }));
   }
 
   protected cancel(): void {

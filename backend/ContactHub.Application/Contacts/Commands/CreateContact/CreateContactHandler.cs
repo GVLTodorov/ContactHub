@@ -13,7 +13,7 @@ public class CreateContactHandler(IAppDbContext db, TimeProvider timeProvider)
             command.FirstName,
             command.Surname,
             command.DateOfBirth!.Value,
-            Address.Create(command.Address!.Street, command.Address.PostalCode, command.Address.City, command.Address.Country),
+            command.Address!.ToAddress(),
             PhoneNumber.Create(command.PhoneNumber),
             Iban.Create(command.Iban),
             timeProvider.GetUtcNow().UtcDateTime);

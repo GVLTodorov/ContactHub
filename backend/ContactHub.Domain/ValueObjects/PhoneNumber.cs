@@ -6,6 +6,9 @@ namespace ContactHub.Domain.ValueObjects;
 
 public sealed partial record PhoneNumber
 {
+    public const int MinDigits = 7;
+    public const int MaxDigits = 15;
+
     private PhoneNumber(string value) => Value = value;
 
     public string Value { get; }
@@ -18,12 +21,18 @@ public sealed partial record PhoneNumber
         {
             throw new DomainValidationException(new Dictionary<string, string[]>
             {
-                ["phoneNumber"] = ["Phone number must have an optional leading '+' followed by 7 to 15 digits."],
+                ["phoneNumber"] = [$"Phone number must have an optional leading '+' followed by {MinDigits} to {MaxDigits} digits."],
             });
         }
 
         return new PhoneNumber(normalized);
     }
+
+    /// <summary>
+    /// Rebuilds a phone number that was valid when it was stored, without checking today's rules,
+    /// so a stricter rule never makes existing rows unreadable. For persistence only.
+    /// </summary>
+    public static PhoneNumber FromTrusted(string value) => new(value);
 
     private static bool TryNormalize(string? raw, out string normalized)
     {
@@ -34,7 +43,8 @@ public sealed partial record PhoneNumber
         }
 
         var candidate = StripRegex().Replace(raw, string.Empty);
-        if (!NormalizedRegex().IsMatch(candidate))
+        var digits = candidate.StartsWith('+') ? candidate[1..] : candidate;
+        if (digits.Length is < MinDigits or > MaxDigits || !digits.All(char.IsAsciiDigit))
         {
             return false;
         }
@@ -45,7 +55,4 @@ public sealed partial record PhoneNumber
 
     [GeneratedRegex(@"[ \-.()]")]
     private static partial Regex StripRegex();
-
-    [GeneratedRegex(@"^\+?[0-9]{7,15}$")]
-    private static partial Regex NormalizedRegex();
 }

@@ -10,7 +10,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
-import { ContactsPageActions } from '../../store/contacts/contacts.actions';
+import { ContactDetailPageActions } from '../../store/contacts/contacts.actions';
 import { contactsFeature } from '../../store/contacts/contacts.reducer';
 
 export function ageOf(dateOfBirth: string, today = new Date()): number {
@@ -51,7 +51,7 @@ export class ContactDetail {
   constructor() {
     effect(() => {
       const id = this.id();
-      if (id) this.store.dispatch(ContactsPageActions.detailOpened({ id }));
+      if (id) this.store.dispatch(ContactDetailPageActions.opened({ id }));
     });
   }
 
@@ -66,7 +66,7 @@ export class ContactDetail {
       rejectLabel: 'Cancel',
       acceptButtonProps: { severity: 'danger' },
       rejectButtonProps: { severity: 'secondary', outlined: true },
-      accept: () => this.store.dispatch(ContactsPageActions.deleteContact({ id: c.id })),
+      accept: () => this.store.dispatch(ContactDetailPageActions.deleteConfirmed({ id: c.id })),
     });
   }
 
@@ -90,6 +90,6 @@ export class ContactDetail {
 
   protected retry(): void {
     const id = this.id();
-    if (id) this.store.dispatch(ContactsPageActions.detailOpened({ id }));
+    if (id) this.store.dispatch(ContactDetailPageActions.retry({ id }));
   }
 }

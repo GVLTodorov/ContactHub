@@ -1,10 +1,12 @@
 import { AbstractControl, ValidationErrors } from '@angular/forms';
-import { IBAN_LENGTHS } from './iban-lengths';
+import { CONTACT_RULES } from './contact-rules';
+
+const { ibanLengths, maxAgeYears, phoneDigits } = CONTACT_RULES;
 
 export function isValidIban(raw: string): boolean {
   const iban = raw.replace(/\s+/g, '').toUpperCase();
   if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/.test(iban)) return false;
-  const expected = Object.hasOwn(IBAN_LENGTHS, iban.slice(0, 2)) ? IBAN_LENGTHS[iban.slice(0, 2)] : undefined;
+  const expected = Object.hasOwn(ibanLengths, iban.slice(0, 2)) ? ibanLengths[iban.slice(0, 2)] : undefined;
   if (expected === undefined || iban.length !== expected) return false;
   const rearranged = iban.slice(4) + iban.slice(0, 4);
   let remainder = 0;
@@ -16,7 +18,8 @@ export function isValidIban(raw: string): boolean {
 }
 
 export function isValidPhone(raw: string): boolean {
-  return /^\+?[0-9]{7,15}$/.test(raw.replace(/[\s\-.()]/g, ''));
+  const digits = raw.replace(/[\s\-.()]/g, '').replace(/^\+/, '');
+  return /^[0-9]+$/.test(digits) && digits.length >= phoneDigits.min && digits.length <= phoneDigits.max;
 }
 
 export function ibanValidator(control: AbstractControl<string | null>): ValidationErrors | null {
@@ -26,7 +29,9 @@ export function ibanValidator(control: AbstractControl<string | null>): Validati
 
 export function phoneValidator(control: AbstractControl<string | null>): ValidationErrors | null {
   const v = control.value;
-  return !v || isValidPhone(v) ? null : { phone: 'Use 7 to 15 digits, optionally starting with +.' };
+  return !v || isValidPhone(v)
+    ? null
+    : { phone: `Use ${phoneDigits.min} to ${phoneDigits.max} digits, optionally starting with +.` };
 }
 
 export function dateOfBirthValidator(control: AbstractControl<Date | null>): ValidationErrors | null {
@@ -34,7 +39,9 @@ export function dateOfBirthValidator(control: AbstractControl<Date | null>): Val
   if (!v) return null;
   const now = new Date();
   if (v.getTime() > now.getTime()) return { dateOfBirth: 'Date of birth cannot be in the future.' };
-  const oldest = new Date(now.getFullYear() - 150, now.getMonth(), now.getDate());
-  if (v.getTime() < oldest.getTime()) return { dateOfBirth: 'Date of birth cannot be over 150 years ago.' };
+  const oldest = new Date(now.getFullYear() - maxAgeYears, now.getMonth(), now.getDate());
+  if (v.getTime() < oldest.getTime()) {
+    return { dateOfBirth: `Date of birth cannot be over ${maxAgeYears} years ago.` };
+  }
   return null;
 }

@@ -1,4 +1,5 @@
 using ContactHub.Application.Contacts;
+using ContactHub.Application.Contacts.Commands;
 using ContactHub.Application.Contacts.Commands.CreateContact;
 using ContactHub.Application.Contacts.Commands.DeleteContact;
 using ContactHub.Application.Contacts.Commands.UpdateContact;
@@ -39,6 +40,8 @@ public sealed class TestDatabase : IDisposable
         }
     }
 
+    public DbContextOptions<AppDbContext> Options => _options;
+
     public AppDbContext CreateContext() => new(_options);
 
     public void Dispose() => _connection.Dispose();
@@ -46,11 +49,11 @@ public sealed class TestDatabase : IDisposable
 
 public static class Commands
 {
-    public static CreateAddress ValidAddress() => new("Main St 1", "10115", "Berlin", "Germany");
+    public static AddressInput ValidAddress() => new("Main St 1", "10115", "Berlin", "Germany");
 
     public static CreateContactCommand ValidCreate(string firstName = "Ada", string surname = "Lovelace") =>
         new(firstName, surname, new DateOnly(1990, 1, 1), ValidAddress(), "+49 30 123456", "DE89 3704 0044 0532 0130 00");
 
-    public static UpdateContactCommand ValidUpdate(Guid id, string firstName = "Grace", string surname = "Hopper") =>
-        new(id, firstName, surname, new DateOnly(1985, 5, 5), new CreateAddress("Other St 2", "20095", "Hamburg", "Germany"), "+49 40 999999", "GB82 WEST 1234 5698 7654 32");
+    public static UpdateContactCommand ValidUpdate(Guid id, string firstName = "Grace", string surname = "Hopper", int? version = 1) =>
+        new(id, version, firstName, surname, new DateOnly(1985, 5, 5), new AddressInput("Other St 2", "20095", "Hamburg", "Germany"), "+49 40 999999", "GB82 WEST 1234 5698 7654 32");
 }

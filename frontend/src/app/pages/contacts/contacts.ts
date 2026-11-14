@@ -10,7 +10,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { DatePipe } from '@angular/common';
 import { Contact } from '../../api/contacts-api';
-import { ContactsPageActions } from '../../store/contacts/contacts.actions';
+import { ContactListPageActions } from '../../store/contacts/contacts.actions';
 import { contactsFeature } from '../../store/contacts/contacts.reducer';
 
 @Component({
@@ -35,7 +35,7 @@ export class Contacts {
   protected readonly skeletonRows = [1, 2, 3, 4, 5];
 
   constructor() {
-    this.store.dispatch(ContactsPageActions.opened());
+    this.store.dispatch(ContactListPageActions.opened());
   }
 
   protected confirmDelete(c: Contact): void {
@@ -47,12 +47,12 @@ export class Contacts {
       rejectLabel: 'Cancel',
       acceptButtonProps: { severity: 'danger' },
       rejectButtonProps: { severity: 'secondary', outlined: true },
-      accept: () => this.store.dispatch(ContactsPageActions.deleteContact({ id: c.id })),
+      accept: () => this.store.dispatch(ContactListPageActions.deleteConfirmed({ id: c.id })),
     });
   }
 
   protected search(value: string): void {
-    this.store.dispatch(ContactsPageActions.searchChanged({ query: value }));
+    this.store.dispatch(ContactListPageActions.searchChanged({ query: value }));
   }
 
   protected clearSearch(): void {
@@ -60,6 +60,6 @@ export class Contacts {
   }
 
   protected retry(): void {
-    this.store.dispatch(ContactsPageActions.retry());
+    this.store.dispatch(ContactListPageActions.retry());
   }
 }

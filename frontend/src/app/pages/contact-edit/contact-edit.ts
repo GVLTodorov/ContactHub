@@ -5,9 +5,8 @@ import { Store } from '@ngrx/store';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
-import { ContactInput } from '../../api/contacts-api';
-import { ContactForm } from '../../components/contact-form/contact-form';
-import { ContactsPageActions } from '../../store/contacts/contacts.actions';
+import { ContactForm, ContactFormValue } from '../../components/contact-form/contact-form';
+import { EditContactPageActions } from '../../store/contacts/contacts.actions';
 import { contactsFeature } from '../../store/contacts/contacts.reducer';
 
 @Component({
@@ -28,16 +27,17 @@ export class ContactEdit {
   protected readonly fieldErrors = this.store.selectSignal(contactsFeature.selectFieldErrors);
 
   constructor() {
-    this.store.dispatch(ContactsPageActions.formOpened());
     effect(() => {
       const id = this.id();
-      if (id) this.store.dispatch(ContactsPageActions.detailOpened({ id }));
+      if (id) this.store.dispatch(EditContactPageActions.opened({ id }));
     });
   }
 
-  protected save(input: ContactInput): void {
+  protected save({ input, version }: ContactFormValue): void {
     const id = this.id();
-    if (id) this.store.dispatch(ContactsPageActions.updateSubmitted({ id, input }));
+    if (id && version !== null) {
+      this.store.dispatch(EditContactPageActions.updateSubmitted({ id, version, input }));
+    }
   }
 
   protected cancel(): void {

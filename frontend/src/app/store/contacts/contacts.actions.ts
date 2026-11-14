@@ -1,17 +1,41 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
 import { ApiError, Contact, ContactInput } from '../../api/contacts-api';
 
-export const ContactsPageActions = createActionGroup({
-  source: 'Contacts Page',
+// One action group per source, so the devtools log shows where each event came from.
+
+export const ContactListPageActions = createActionGroup({
+  source: 'Contact List Page',
   events: {
     Opened: emptyProps(),
     Retry: emptyProps(),
     'Search Changed': props<{ query: string }>(),
-    'Form Opened': emptyProps(),
+    'Delete Confirmed': props<{ id: string }>(),
+  },
+});
+
+export const ContactDetailPageActions = createActionGroup({
+  source: 'Contact Detail Page',
+  events: {
+    Opened: props<{ id: string }>(),
+    Retry: props<{ id: string }>(),
+    'Delete Confirmed': props<{ id: string }>(),
+  },
+});
+
+export const NewContactPageActions = createActionGroup({
+  source: 'New Contact Page',
+  events: {
+    Opened: emptyProps(),
     'Create Submitted': props<{ input: ContactInput }>(),
-    'Detail Opened': props<{ id: string }>(),
-    'Update Submitted': props<{ id: string; input: ContactInput }>(),
-    'Delete Contact': props<{ id: string }>(),
+  },
+});
+
+export const EditContactPageActions = createActionGroup({
+  source: 'Edit Contact Page',
+  events: {
+    Opened: props<{ id: string }>(),
+    /** `version` is the one the form was filled from; the API answers 409 if it is stale. */
+    'Update Submitted': props<{ id: string; version: number; input: ContactInput }>(),
   },
 });
 

@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { Contact } from '../../api/contacts-api';
-import { ContactsPageActions } from '../../store/contacts/contacts.actions';
+import { ContactDetailPageActions } from '../../store/contacts/contacts.actions';
 import { contactsFeature } from '../../store/contacts/contacts.reducer';
 import { ageOf, ContactDetail } from './contact-detail';
 
@@ -18,6 +18,7 @@ const contact: Contact = {
   ibanFormatted: 'DE89 3704 0044 0532 0130 00',
   createdAt: '2024-01-01T10:00:00Z',
   updatedAt: '2024-02-01T10:00:00Z',
+  version: 1,
 };
 
 describe('ContactDetail', () => {
@@ -55,7 +56,7 @@ describe('ContactDetail', () => {
     retry?.click();
     await fixture.whenStable();
     // no route id in the mock store, so nothing is dispatched
-    expect(dispatch).not.toHaveBeenCalledWith(ContactsPageActions.detailOpened({ id: '1' }));
+    expect(dispatch).not.toHaveBeenCalledWith(ContactDetailPageActions.retry({ id: '1' }));
   });
 
   it('shows all contact fields', async () => {
@@ -100,9 +101,9 @@ describe('ContactDetail', () => {
     btn?.click();
     await fixture.whenStable();
     expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ message: 'Delete Ann Lee?' }));
-    expect(dispatch).not.toHaveBeenCalledWith(ContactsPageActions.deleteContact({ id: '1' }));
+    expect(dispatch).not.toHaveBeenCalledWith(ContactDetailPageActions.deleteConfirmed({ id: '1' }));
     confirm.mock.calls[0][0].accept?.();
-    expect(dispatch).toHaveBeenCalledWith(ContactsPageActions.deleteContact({ id: '1' }));
+    expect(dispatch).toHaveBeenCalledWith(ContactDetailPageActions.deleteConfirmed({ id: '1' }));
   });
 
   it('computes age', () => {

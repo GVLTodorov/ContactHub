@@ -58,12 +58,12 @@ describe('ContactsApi', () => {
     expect(done).toBe(true);
   });
 
-  it('updates a contact with PUT', () => {
+  it('updates a contact with PUT, sending the version it was read at', () => {
     const input = { firstName: 'A' } as ContactInput;
-    api.update('abc', input).subscribe();
+    api.update('abc', 4, input).subscribe();
     const req = http.expectOne('/api/contacts/abc');
     expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual(input);
+    expect(req.request.body).toEqual({ firstName: 'A', version: 4 });
     req.flush({ id: 'abc' });
   });
 });

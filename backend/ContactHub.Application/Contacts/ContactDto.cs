@@ -14,7 +14,8 @@ public record ContactDto(
     string Iban,
     string IbanFormatted,
     DateTime CreatedAt,
-    DateTime UpdatedAt)
+    DateTime UpdatedAt,
+    int Version)
 {
     public static ContactDto From(Contact c) => new(
         c.Id,
@@ -26,5 +27,6 @@ public record ContactDto(
         c.Iban.Value,
         c.Iban.ToFormatted(),
         c.CreatedAt,
-        c.UpdatedAt);
+        c.UpdatedAt,
+        c.Version);
 }

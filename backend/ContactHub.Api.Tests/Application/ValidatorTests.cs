@@ -1,5 +1,6 @@
 using ContactHub.Api.Tests.Common;
 using ContactHub.Application.Contacts;
+using ContactHub.Application.Contacts.Commands;
 using ContactHub.Application.Contacts.Commands.CreateContact;
 using ContactHub.Application.Contacts.Commands.DeleteContact;
 using ContactHub.Application.Contacts.Commands.UpdateContact;
@@ -32,6 +33,17 @@ public class ValidatorTests
         var result = validator.Validate(Commands.ValidUpdate(Guid.NewGuid()));
 
         Assert.That(result.IsValid, Is.True);
+    }
+
+    [TestCase(null)]
+    [TestCase(0)]
+    public void UpdateValidator_MissingOrInvalidVersion_IsRejected(int? version)
+    {
+        var validator = new UpdateContactValidator(new FixedTimeProvider());
+
+        var result = validator.Validate(Commands.ValidUpdate(Guid.NewGuid(), version: version));
+
+        Assert.That(Keys(result), Is.EqualTo(new[] { "Version" }));
     }
 
     [Test]
@@ -89,7 +101,7 @@ public class ValidatorTests
         {
             FirstName = new string('a', 101),
             Surname = new string('b', 101),
-            Address = new CreateAddress(new string('s', 201), new string('p', 21), new string('c', 101), new string('k', 101)),
+            Address = new AddressInput(new string('s', 201), new string('p', 21), new string('c', 101), new string('k', 101)),
         };
 
         var result = _create.Validate(command);
@@ -102,7 +114,7 @@ public class ValidatorTests
     [Test]
     public void EmptyAddressFields_AreRejected()
     {
-        var result = _create.Validate(Commands.ValidCreate() with { Address = new CreateAddress("", " ", null, "") });
+        var result = _create.Validate(Commands.ValidCreate() with { Address = new AddressInput("", " ", null, "") });
 
         Assert.That(Keys(result), Is.EquivalentTo(new[] { "Address.Street", "Address.PostalCode", "Address.City", "Address.Country" }));
     }

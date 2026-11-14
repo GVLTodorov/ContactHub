@@ -12,7 +12,17 @@ import { FieldsetModule } from 'primeng/fieldset';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { Contact, ContactInput } from '../../api/contacts-api';
+import { CONTACT_RULES } from './contact-rules';
 import { dateOfBirthValidator, ibanValidator, phoneValidator } from './validators';
+
+const { maxLength } = CONTACT_RULES;
+
+/** What the form emits on submit. */
+export interface ContactFormValue {
+  input: ContactInput;
+  /** Version of the contact the form was filled from (`null` for a new contact). */
+  version: number | null;
+}
 
 export function formatDate(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -30,7 +40,7 @@ export class ContactForm {
   readonly initial = input<Contact | null>(null);
   /** Server validation errors keyed like `firstName` or `address.city`. */
   readonly serverErrors = input<Record<string, string[]>>({});
-  readonly submitted = output<ContactInput>();
+  readonly submitted = output<ContactFormValue>();
   readonly cancelled = output<void>();
 
   protected readonly maxDate = new Date();
@@ -46,11 +56,11 @@ export class ContactForm {
   protected readonly form = new FormGroup({
     firstName: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(100)],
+      validators: [Validators.required, Validators.maxLength(maxLength.firstName)],
     }),
     surname: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(100)],
+      validators: [Validators.required, Validators.maxLength(maxLength.surname)],
     }),
     dateOfBirth: new FormControl<Date | null>(null, [Validators.required, dateOfBirthValidator]),
     phoneNumber: new FormControl('', {
@@ -61,19 +71,19 @@ export class ContactForm {
     address: new FormGroup({
       street: new FormControl('', {
         nonNullable: true,
-        validators: [Validators.required, Validators.maxLength(200)],
+        validators: [Validators.required, Validators.maxLength(maxLength.street)],
       }),
       postalCode: new FormControl('', {
         nonNullable: true,
-        validators: [Validators.required, Validators.maxLength(20)],
+        validators: [Validators.required, Validators.maxLength(maxLength.postalCode)],
       }),
       city: new FormControl('', {
         nonNullable: true,
-        validators: [Validators.required, Validators.maxLength(100)],
+        validators: [Validators.required, Validators.maxLength(maxLength.city)],
       }),
       country: new FormControl('', {
         nonNullable: true,
-        validators: [Validators.required, Validators.maxLength(100)],
+        validators: [Validators.required, Validators.maxLength(maxLength.country)],
       }),
     }),
   });
@@ -85,10 +95,18 @@ export class ContactForm {
       .flatMap(([, messages]) => messages),
   );
 
+  /** The contact the form was last filled from. */
+  private filledFrom: Contact | null = null;
+
   constructor() {
     effect(() => {
       const c = this.initial();
       if (!c) return;
+      // The edit page shows the cached contact at once and then re-fetches it. A refreshed copy of
+      // the same contact must not wipe what the user has typed; the stale version it keeps makes
+      // the API answer 409 if someone else really changed the contact in the meantime.
+      if (c.id === this.filledFrom?.id && this.form.dirty) return;
+      this.filledFrom = c;
       const [y, m, d] = c.dateOfBirth.split('-').map(Number);
       this.form.reset({
         firstName: c.firstName,
@@ -135,7 +153,7 @@ export class ContactForm {
       return;
     }
     const v = this.form.getRawValue();
-    this.submitted.emit({
+    const input: ContactInput = {
       firstName: v.firstName.trim(),
       surname: v.surname.trim(),
       dateOfBirth: formatDate(v.dateOfBirth as Date),
@@ -147,6 +165,7 @@ export class ContactForm {
       },
       phoneNumber: v.phoneNumber.trim(),
       iban: v.iban.trim(),
-    });
+    };
+    this.submitted.emit({ input, version: this.filledFrom?.version ?? null });
   }
 }

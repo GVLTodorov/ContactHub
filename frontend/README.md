@@ -49,7 +49,7 @@ ng test
 The end-to-end test lives in `../e2e`. Run it from the repo root:
 
 ```bash
-dotnet run --project e2e/ContactHub.E2E
+dotnet test e2e/ContactHub.E2E
 ```
 
 ## Additional Resources

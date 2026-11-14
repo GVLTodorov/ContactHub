@@ -52,6 +52,10 @@ namespace ContactHub.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
                     b.ComplexProperty(typeof(Dictionary<string, object>), "Address", "ContactHub.Domain.Entities.Contact.Address#Address", b1 =>
                         {
                             b1.IsRequired();
@@ -81,7 +85,7 @@ namespace ContactHub.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("Surname", "FirstName");
 
-                    b.ToTable("Contacts", (string)null);
+                    b.ToTable("Contacts");
                 });
 #pragma warning restore 612, 618
         }

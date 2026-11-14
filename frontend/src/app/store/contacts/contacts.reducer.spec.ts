@@ -1,5 +1,11 @@
 import { Contact, ContactInput } from '../../api/contacts-api';
-import { ContactsApiActions, ContactsPageActions } from './contacts.actions';
+import {
+  ContactDetailPageActions,
+  ContactListPageActions,
+  ContactsApiActions,
+  EditContactPageActions,
+  NewContactPageActions,
+} from './contacts.actions';
 import { contactsFeature, initialState } from './contacts.reducer';
 
 const make = (id: string, firstName: string, surname: string): Contact => ({
@@ -13,21 +19,22 @@ const make = (id: string, firstName: string, surname: string): Contact => ({
   ibanFormatted: 'DE89 3704 0044 0532 0130 00',
   createdAt: '',
   updatedAt: '',
+  version: 1,
 });
 
 describe('contacts reducer', () => {
   const reducer = contactsFeature.reducer;
 
   it('stores the search query and keeps it across loads', () => {
-    let s = reducer(initialState, ContactsPageActions.searchChanged({ query: 'bob' }));
+    let s = reducer(initialState, ContactListPageActions.searchChanged({ query: 'bob' }));
     expect(s.query).toBe('bob');
-    s = reducer(s, ContactsPageActions.opened());
+    s = reducer(s, ContactListPageActions.opened());
     s = reducer(s, ContactsApiActions.loadSuccess({ contacts: [] }));
     expect(s.query).toBe('bob');
   });
 
   it('sets loading on open', () => {
-    const s = reducer(initialState, ContactsPageActions.opened());
+    const s = reducer(initialState, ContactListPageActions.opened());
     expect(s.loadStatus).toBe('loading');
   });
 
@@ -47,7 +54,7 @@ describe('contacts reducer', () => {
   });
 
   it('tracks create lifecycle', () => {
-    let s = reducer(initialState, ContactsPageActions.createSubmitted({ input: {} as ContactInput }));
+    let s = reducer(initialState, NewContactPageActions.createSubmitted({ input: {} as ContactInput }));
     expect(s.saveStatus).toBe('loading');
     s = reducer(s, ContactsApiActions.createFailure({ error: { message: 'bad', fieldErrors: { iban: ['x'] } } }));
     expect(s.saveStatus).toBe('error');
@@ -59,13 +66,22 @@ describe('contacts reducer', () => {
 
   it('resets save state when the form opens', () => {
     const failed = reducer(initialState, ContactsApiActions.createFailure({ error: { message: 'bad', fieldErrors: { a: ['b'] } } }));
-    const s = reducer(failed, ContactsPageActions.formOpened());
+    const s = reducer(failed, NewContactPageActions.opened());
     expect(s.saveStatus).toBe('idle');
     expect(s.fieldErrors).toEqual({});
   });
 
+  it('resets save state and starts the detail load when the edit page opens', () => {
+    const failed = reducer(initialState, ContactsApiActions.updateFailure({ error: { message: 'bad', fieldErrors: { a: ['b'] } } }));
+    const s = reducer(failed, EditContactPageActions.opened({ id: '1' }));
+    expect(s.saveStatus).toBe('idle');
+    expect(s.error).toBeNull();
+    expect(s.fieldErrors).toEqual({});
+    expect(s.detailStatus).toBe('loading');
+  });
+
   it('tracks the detail load, upserting the contact', () => {
-    let s = reducer(initialState, ContactsPageActions.detailOpened({ id: '1' }));
+    let s = reducer(initialState, ContactDetailPageActions.opened({ id: '1' }));
     expect(s.detailStatus).toBe('loading');
     s = reducer(s, ContactsApiActions.loadOneSuccess({ contact: make('1', 'A', 'B') }));
     expect(s.detailStatus).toBe('success');
@@ -97,7 +113,7 @@ describe('contacts reducer', () => {
   });
 
   it('tracks update lifecycle', () => {
-    let s = reducer(initialState, ContactsPageActions.updateSubmitted({ id: '1', input: {} as ContactInput }));
+    let s = reducer(initialState, EditContactPageActions.updateSubmitted({ id: '1', version: 3, input: {} as ContactInput }));
     expect(s.saveStatus).toBe('loading');
     s = reducer(s, ContactsApiActions.updateFailure({ error: { message: 'bad', fieldErrors: { 'address.city': ['x'] } } }));
     expect(s.saveStatus).toBe('error');

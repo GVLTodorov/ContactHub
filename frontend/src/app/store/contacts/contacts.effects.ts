@@ -4,7 +4,13 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { MessageService } from 'primeng/api';
 import { catchError, exhaustMap, map, of, switchMap, tap } from 'rxjs';
 import { ContactsApi, toApiError } from '../../api/contacts-api';
-import { ContactsApiActions, ContactsPageActions } from './contacts.actions';
+import {
+  ContactDetailPageActions,
+  ContactListPageActions,
+  ContactsApiActions,
+  EditContactPageActions,
+  NewContactPageActions,
+} from './contacts.actions';
 
 @Injectable()
 export class ContactsEffects {
@@ -15,7 +21,7 @@ export class ContactsEffects {
 
   readonly load$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(ContactsPageActions.opened, ContactsPageActions.retry),
+      ofType(ContactListPageActions.opened, ContactListPageActions.retry),
       switchMap(() =>
         this.api.list().pipe(
           map((contacts) => ContactsApiActions.loadSuccess({ contacts })),
@@ -27,7 +33,7 @@ export class ContactsEffects {
 
   readonly create$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(ContactsPageActions.createSubmitted),
+      ofType(NewContactPageActions.createSubmitted),
       exhaustMap(({ input }) =>
         this.api.create(input).pipe(
           map((contact) => ContactsApiActions.createSuccess({ contact })),
@@ -39,7 +45,7 @@ export class ContactsEffects {
 
   readonly loadOne$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(ContactsPageActions.detailOpened),
+      ofType(ContactDetailPageActions.opened, ContactDetailPageActions.retry, EditContactPageActions.opened),
       switchMap(({ id }) =>
         this.api.get(id).pipe(
           map((contact) => ContactsApiActions.loadOneSuccess({ contact })),
@@ -54,9 +60,9 @@ export class ContactsEffects {
 
   readonly update$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(ContactsPageActions.updateSubmitted),
-      exhaustMap(({ id, input }) =>
-        this.api.update(id, input).pipe(
+      ofType(EditContactPageActions.updateSubmitted),
+      exhaustMap(({ id, version, input }) =>
+        this.api.update(id, version, input).pipe(
           map((contact) => ContactsApiActions.updateSuccess({ contact })),
           catchError((e) => of(ContactsApiActions.updateFailure({ error: toApiError(e) }))),
         ),
@@ -82,7 +88,7 @@ export class ContactsEffects {
 
   readonly delete$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(ContactsPageActions.deleteContact),
+      ofType(ContactListPageActions.deleteConfirmed, ContactDetailPageActions.deleteConfirmed),
       exhaustMap(({ id }) =>
         this.api.delete(id).pipe(
           map(() => ContactsApiActions.deleteContactSuccess({ id })),

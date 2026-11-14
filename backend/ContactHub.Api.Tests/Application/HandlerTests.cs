@@ -10,6 +10,7 @@ using ContactHub.Application.Exceptions;
 using ContactHub.Domain.Entities;
 using ContactHub.Domain.Exceptions;
 using ContactHub.Domain.ValueObjects;
+using ContactHub.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace ContactHub.Api.Tests.Application;
@@ -25,6 +26,13 @@ public class HandlerTests
 
     [TearDown]
     public void TearDown() => _database.Dispose();
+
+    /// <summary>Simulates another writer saving between our read and our write.</summary>
+    private sealed class ConcurrentlyChangedDbContext(DbContextOptions<AppDbContext> options) : AppDbContext(options)
+    {
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
+            throw new DbUpdateConcurrencyException("Row was changed.");
+    }
 
     private async Task<ContactDto> CreateAsync(CreateContactCommand command)
     {
@@ -124,6 +132,73 @@ public class HandlerTests
         Assert.That(updated.Iban, Is.EqualTo("GB82WEST12345698765432"));
         Assert.That(updated.CreatedAt, Is.EqualTo(created.CreatedAt));
         Assert.That(updated.UpdatedAt, Is.EqualTo(later.GetUtcNow().UtcDateTime));
+    }
+
+    [Test]
+    public async Task Update_BumpsVersion()
+    {
+        var created = await CreateAsync(Commands.ValidCreate());
+
+        await using var db = _database.CreateContext();
+        var handler = new UpdateContactHandler(db, _time);
+        var updated = await handler.HandleAsync(Commands.ValidUpdate(created.Id, version: created.Version), CancellationToken.None);
+
+        Assert.That(created.Version, Is.EqualTo(1));
+        Assert.That(updated.Version, Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task Update_StaleVersion_ThrowsConflictAndKeepsStoredContact()
+    {
+        var created = await CreateAsync(Commands.ValidCreate());
+        await using (var first = _database.CreateContext())
+        {
+            var firstHandler = new UpdateContactHandler(first, _time);
+            await firstHandler.HandleAsync(Commands.ValidUpdate(created.Id), CancellationToken.None);
+        }
+
+        await using var db = _database.CreateContext();
+        var handler = new UpdateContactHandler(db, _time);
+
+        var ex = Assert.ThrowsAsync<ConflictException>(
+            () => handler.HandleAsync(Commands.ValidUpdate(created.Id, "Other", "Writer", version: 1), CancellationToken.None))!;
+
+        Assert.That(ex.Message, Does.Contain("changed by someone else"));
+
+        await using var check = _database.CreateContext();
+        var stored = await check.Contacts.SingleAsync();
+
+        Assert.That(stored.FirstName, Is.EqualTo("Grace"));
+        Assert.That(stored.Version, Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task Update_ConcurrentWriteDuringSave_ThrowsConflict()
+    {
+        var created = await CreateAsync(Commands.ValidCreate());
+
+        await using var db = new ConcurrentlyChangedDbContext(_database.Options);
+        var handler = new UpdateContactHandler(db, _time);
+
+        Assert.ThrowsAsync<ConflictException>(() => handler.HandleAsync(Commands.ValidUpdate(created.Id), CancellationToken.None));
+    }
+
+    [Test]
+    public async Task Reads_StoredValuesThatTodaysRulesReject_StillLoad()
+    {
+        var created = await CreateAsync(Commands.ValidCreate());
+        await using (var raw = _database.CreateContext())
+        {
+            await raw.Database.ExecuteSqlRawAsync("UPDATE Contacts SET Iban = 'XX001234', PhoneNumber = '12'");
+        }
+
+        await using var db = _database.CreateContext();
+        var one = await new GetContactByIdHandler(db).HandleAsync(new GetContactByIdQuery(created.Id), CancellationToken.None);
+        var all = await new GetContactsHandler(db).HandleAsync(new GetContactsQuery(), CancellationToken.None);
+
+        Assert.That(one.Iban, Is.EqualTo("XX001234"));
+        Assert.That(one.PhoneNumber, Is.EqualTo("12"));
+        Assert.That(all.Single().Iban, Is.EqualTo("XX001234"));
     }
 
     [Test]

@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { Contact } from '../../api/contacts-api';
-import { ContactsPageActions } from '../../store/contacts/contacts.actions';
+import { ContactListPageActions } from '../../store/contacts/contacts.actions';
 import { contactsFeature } from '../../store/contacts/contacts.reducer';
 import { Contacts } from './contacts';
 
@@ -38,7 +38,7 @@ describe('Contacts page', () => {
     expect(el.textContent).not.toContain('No contacts yet');
     const clear = Array.from(el.querySelectorAll('button')).find((b) => b.textContent?.includes('Clear search'));
     clear!.click();
-    expect(dispatch).toHaveBeenCalledWith(ContactsPageActions.searchChanged({ query: '' }));
+    expect(dispatch).toHaveBeenCalledWith(ContactListPageActions.searchChanged({ query: '' }));
   });
 
   it('shows "No contacts yet" when there are no contacts', async () => {
@@ -56,6 +56,6 @@ describe('Contacts page', () => {
     expect(input.value).toBe('ann');
     input.value = 'lee';
     input.dispatchEvent(new Event('input'));
-    expect(dispatch).toHaveBeenCalledWith(ContactsPageActions.searchChanged({ query: 'lee' }));
+    expect(dispatch).toHaveBeenCalledWith(ContactListPageActions.searchChanged({ query: 'lee' }));
   });
 });

@@ -24,6 +24,8 @@ export interface Contact extends ContactInput {
   ibanFormatted: string;
   createdAt: string;
   updatedAt: string;
+  /** Goes up on every change; sent back on update so the API can reject stale edits (409). */
+  version: number;
 }
 
 export interface ProblemDetails {
@@ -71,8 +73,8 @@ export class ContactsApi {
     return this.http.get<Contact>(`/api/contacts/${encodeURIComponent(id)}`);
   }
 
-  update(id: string, input: ContactInput): Observable<Contact> {
-    return this.http.put<Contact>(`/api/contacts/${encodeURIComponent(id)}`, input);
+  update(id: string, version: number, input: ContactInput): Observable<Contact> {
+    return this.http.put<Contact>(`/api/contacts/${encodeURIComponent(id)}`, { ...input, version });
   }
 
   delete(id: string): Observable<void> {

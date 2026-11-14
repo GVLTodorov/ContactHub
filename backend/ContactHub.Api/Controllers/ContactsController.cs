@@ -19,11 +19,12 @@ public class ContactsController : ControllerBase
     [ProducesResponseType<ContactDto>(Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(Status400BadRequest)]
     public async Task<IActionResult> Create(
-        CreateContactCommand command,
+        CreateContactRequest body,
         [FromServices]
         ICommandHandler<CreateContactCommand, ContactDto> handler,
         CancellationToken cancellationToken)
     {
+        var command = body.ToCommand();
         var contact = await handler.HandleAsync(command, cancellationToken);
 
         return Created($"/api/contacts/{contact.Id}", contact);
@@ -48,6 +49,7 @@ public class ContactsController : ControllerBase
     [ProducesResponseType<ContactDto>(Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(Status409Conflict)]
     public async Task<ContactDto> Update(
         Guid id,
         UpdateContactRequest body,
@@ -55,14 +57,7 @@ public class ContactsController : ControllerBase
         ICommandHandler<UpdateContactCommand, ContactDto> handler,
         CancellationToken cancellationToken)
     {
-        var command = new UpdateContactCommand(
-            id,
-            body.FirstName,
-            body.Surname,
-            body.DateOfBirth,
-            body.Address,
-            body.PhoneNumber,
-            body.Iban);
+        var command = body.ToCommand(id);
         var contact = await handler.HandleAsync(command, cancellationToken);
 
         return contact;
