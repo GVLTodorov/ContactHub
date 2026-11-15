@@ -1,0 +1,5 @@
+* text=auto
+
+# backend/.editorconfig requires CRLF and CI runs `dotnet format --verify-no-changes` on Linux,
+# so C# files must be checked out with CRLF on every OS.
+*.cs text eol=crlf
