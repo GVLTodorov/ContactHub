@@ -1,0 +1,12 @@
+<section class="flex flex-col gap-4 py-4">
+  <h1 class="text-2xl font-bold">New contact</h1>
+  @if (saveStatus() === 'error' && error()) {
+    <p-message severity="error" role="alert">{{ error() }}</p-message>
+  }
+  <app-contact-form
+    [saving]="saveStatus() === 'loading'"
+    [serverErrors]="fieldErrors()"
+    (submitted)="save($event)"
+    (cancelled)="cancel()"
+  />
+</section>
