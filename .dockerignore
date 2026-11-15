@@ -1,0 +1,14 @@
+**/bin
+**/obj
+**/node_modules
+**/.angular
+**/dist
+**/coverage
+**/TestResults
+**/*.db*
+.git
+.github
+.vscode
+.claude
+docs
+e2e

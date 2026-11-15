@@ -1,0 +1,288 @@
+name: CI
+
+# Pipeline: backend, frontend and e2e run on every push and pull request.
+# On main, once they pass: image (GHCR), deploy (Render), coverage + demo -> publish (badges branch).
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - run: dotnet restore
+      - run: dotnet format --verify-no-changes
+      - run: dotnet build --no-restore
+      - name: Unit tests (coverlet.msbuild writes ContactHub.Api.Tests/coverage.cobertura.xml)
+        run: dotnet test ContactHub.Api.Tests --no-build
+      - name: Integration tests
+        run: dotnet test ContactHub.Api.Integration.Tests --no-build --collect "XPlat Code Coverage" --results-directory "$GITHUB_WORKSPACE/backend-coverage/integration"
+      - name: Collect coverage reports
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/backend-coverage/unit"
+          cp ContactHub.Api.Tests/coverage.cobertura.xml "$GITHUB_WORKSPACE/backend-coverage/unit/"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend-coverage/
+          retention-days: 7
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:coverage
+      - run: npm run test:scripts
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
+          retention-days: 7
+
+  e2e:
+    runs-on: ubuntu-latest
+    # A normal run takes about 5 minutes including setup; a hung server or browser should not hold
+    # the runner for GitHub's 6-hour default.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: dotnet tool install --global dotnet-coverage
+      - run: dotnet build e2e/ContactHub.E2E
+      - name: Install Chromium for Playwright
+        run: pwsh e2e/ContactHub.E2E/bin/Debug/net10.0/playwright.ps1 install --with-deps chromium
+      - name: E2E tests (NUnit + Playwright; start the backend and frontend themselves)
+        run: dotnet test e2e/ContactHub.E2E --no-build
+        env:
+          CI: true
+          E2E_COVERAGE: true
+      - name: Convert frontend e2e coverage to Cobertura
+        run: npm run coverage:e2e -- ../e2e/artifacts/coverage/frontend/raw ../e2e/artifacts/coverage/frontend
+        working-directory: frontend
+      - uses: actions/upload-artifact@v4
+        with:
+          name: e2e-coverage
+          path: |
+            e2e/artifacts/coverage/backend/coverage.cobertura.xml
+            e2e/artifacts/coverage/frontend/cobertura-coverage.xml
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-artifacts
+          path: e2e/artifacts/
+          retention-days: 7
+
+  image:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [backend, frontend, e2e]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    concurrency: release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Compute version
+        id: v
+        run: |
+          latest=$(git tag --list 'v*' --sort=-v:refname | head -n1)
+          if [ -z "$latest" ]; then
+            version=0.0.1
+          else
+            IFS=. read -r major minor patch <<< "${latest#v}"
+            version="$major.$minor.$((patch + 1))"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: backend
+          push: true
+          tags: |
+            ${{ steps.v.outputs.image }}:${{ steps.v.outputs.version }}
+            ${{ steps.v.outputs.image }}:latest
+      - name: Tag release
+        run: |
+          git tag "v${{ steps.v.outputs.version }}"
+          git push origin "v${{ steps.v.outputs.version }}"
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render API deploy
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "::notice::RENDER_DEPLOY_HOOK_URL is not set, skipping the Render API deploy."
+            exit 0
+          fi
+          curl --fail --silent --show-error --retry 3 -X POST "$RENDER_DEPLOY_HOOK_URL" > /dev/null
+          echo "Render API deploy triggered."
+      - name: Trigger Render frontend deploy
+        env:
+          RENDER_FRONTEND_DEPLOY_HOOK_URL: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_FRONTEND_DEPLOY_HOOK_URL" ]; then
+            echo "::notice::RENDER_FRONTEND_DEPLOY_HOOK_URL is not set, skipping the Render frontend deploy."
+            exit 0
+          fi
+          curl --fail --silent --show-error --retry 3 -X POST "$RENDER_FRONTEND_DEPLOY_HOOK_URL" > /dev/null
+          echo "Render frontend deploy triggered."
+
+  coverage:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [backend, frontend, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - uses: actions/download-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend-coverage
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend-coverage
+      - uses: actions/download-artifact@v4
+        with:
+          name: e2e-coverage
+          path: e2e-coverage
+      - run: dotnet tool install --global dotnet-reportgenerator-globaltool
+      - name: Make badges
+        run: |
+          # Report $1 (backend|frontend), suite $2 (unit|integration|e2e), Cobertura files $3, extra args $4.
+          badge() {
+            local app=$1 suite=$2 reports=$3 filter=${4:-}
+            if [ -z "$reports" ]; then
+              echo "::error::No $app $suite coverage reports found"
+              exit 1
+            fi
+            echo "$app $suite reports: $reports"
+            reportgenerator "-reports:$reports" "-targetdir:rg/$app/$suite" "-reporttypes:Badges" ${filter:+"$filter"}
+            mkdir -p "badges/coverage/$app/$suite"
+            cp "rg/$app/$suite/badge_linecoverage.svg" "badges/coverage/$app/$suite/line.svg"
+            cp "rg/$app/$suite/badge_branchcoverage.svg" "badges/coverage/$app/$suite/branch.svg"
+          }
+          filter='-assemblyfilters:+ContactHub.*;-ContactHub.*Tests*;-ContactHub.E2E*'
+          badge backend unit "$(find backend-coverage/unit -name 'coverage.cobertura.xml' | sort | paste -sd ';')" "$filter"
+          badge backend integration "$(find backend-coverage/integration -name 'coverage.cobertura.xml' | sort | paste -sd ';')" "$filter"
+          badge backend e2e "$(find e2e-coverage -path '*backend*' -name 'coverage.cobertura.xml' | sort | paste -sd ';')" "$filter"
+          badge frontend unit "$(find frontend-coverage -name 'cobertura-coverage.xml' | sort | paste -sd ';')"
+          badge frontend e2e "$(find e2e-coverage -path '*frontend*' -name 'cobertura-coverage.xml' | sort | paste -sd ';')"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: badges
+          path: badges/
+          retention-days: 1
+
+  demo:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [backend, frontend, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      - run: dotnet run --project e2e/ContactHub.Demo -- install --with-deps chromium
+      - run: dotnet run --project e2e/ContactHub.Demo
+        env:
+          CI: true
+      - name: Convert to GIF
+        # Palette from changed pixels only, no dithering, and only the changed rectangle per frame:
+        # about 4.8 MB for the 70 s recording (10 fps with Bayer dithering was about 8 MB).
+        run: |
+          mkdir -p out/demo
+          ffmpeg -y -loglevel error -i e2e/artifacts/demo/demo.webm \
+            -vf "fps=8,scale=960:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle" \
+            -loop 0 out/demo/demo.gif
+          ls -l out/demo/demo.gif
+      - uses: actions/upload-artifact@v4
+        with:
+          name: demo
+          path: out/
+          retention-days: 1
+
+  publish:
+    needs: [coverage, demo]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency: publish-badges
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: badges
+          path: publish
+      - uses: actions/download-artifact@v4
+        with:
+          name: demo
+          path: publish
+      - name: Push to the badges branch
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd publish
+          git init -q -b badges
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Update badges and demo for ${GITHUB_SHA}"
+          git remote add origin "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin badges
