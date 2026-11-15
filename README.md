@@ -1,10 +1,21 @@
 # <img src="frontend/public/favicon.svg" alt="" width="40" align="top"> ContactHub
 
-A contact manager built as an interview task ([requirements](docs/requirements.md)): ASP.NET Core
-(.NET 10) API with SQLite and an Angular UI.
+| What | URL |
+| --- | --- |
+| App (list, search, create, edit, delete contacts) | <https://contacthub-web.onrender.com> |
+| Swagger UI (API docs, try it out) | <https://contacthub-h4or.onrender.com/swagger> |
+| API health check | <https://contacthub-h4or.onrender.com/api/health> |
+| Source | <https://github.com/GVLTodorov/ContactHub> |
 
-**Live demo:** [app](https://contacthub-web.onrender.com) · [Swagger](https://contacthub-h4or.onrender.com/swagger)
-(free hosting, the first request can take up to a minute)
+> The app is a Render static site; the API is a separate free web service that sleeps after about 15
+> minutes without traffic, so the first request can take up to a minute. Data resets to five demo contacts on every restart or deploy.
+
+| Area | Technologies |
+| --- | --- |
+| Backend | ASP.NET Core Web API (.NET 10, controllers), EF Core + SQLite, FluentValidation, CQRS, rich domain model, Clean Architecture |
+| Frontend | Angular, ngrx (store, effects, entity, router-store), PrimeNG, Tailwind CSS v4 |
+| Tests | NUnit, NetArchTest, Vitest, Playwright |
+| DevOps | Docker Compose, GitHub Actions, Render |
 
 | Suite | Line coverage | Branch coverage |
 | --- | --- | --- |
@@ -47,5 +58,5 @@ App at http://127.0.0.1:4700, Swagger at http://127.0.0.1:8080/swagger.
 
 ---
 
-More detail: [Architecture](docs/architecture.md) · [Requirements checklist](docs/qa.md) ·
+More detail: [Requirements](docs/requirements.md) · [Architecture](docs/architecture.md) · [Requirements checklist](docs/qa.md) ·
 [Tests, CI and deployment](docs/deployment.md)
