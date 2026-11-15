@@ -3,6 +3,7 @@ using System.Text.Json;
 using ContactHub.Api.Tests.Api;
 using ContactHub.Api.Tests.Common;
 using ContactHub.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace ContactHub.Api.Tests.Infrastructure;
 
@@ -10,29 +11,32 @@ namespace ContactHub.Api.Tests.Infrastructure;
 public class DemoDataSeederTests
 {
     [Test]
-    public void Seed_EmptyDatabase_InsertsVariedValidContacts()
+    public async Task SeedAsync_EmptyDatabase_InsertsVariedValidContacts()
     {
         using var db = new TestDatabase();
-        using var context = db.CreateContext();
+        await using var context = db.CreateContext();
 
-        DemoDataSeeder.Seed(context, new FixedTimeProvider());
+        await DemoDataSeeder.SeedAsync(context, new FixedTimeProvider());
 
-        var contacts = context.Contacts.ToList();
+        var contacts = await context.Contacts.ToListAsync();
+
         Assert.That(contacts, Has.Count.EqualTo(5));
         Assert.That(contacts.Select(c => c.Surname).Distinct().Count(), Is.EqualTo(5));
         Assert.That(contacts.Select(c => c.CreatedAt), Has.All.GreaterThanOrEqualTo(FixedTimeProvider.DefaultNow.UtcDateTime));
     }
 
     [Test]
-    public void Seed_NonEmptyDatabase_DoesNothing()
+    public async Task SeedAsync_NonEmptyDatabase_DoesNothing()
     {
         using var db = new TestDatabase();
-        using var context = db.CreateContext();
+        await using var context = db.CreateContext();
 
-        DemoDataSeeder.Seed(context, new FixedTimeProvider());
-        DemoDataSeeder.Seed(context, new FixedTimeProvider());
+        await DemoDataSeeder.SeedAsync(context, new FixedTimeProvider());
+        await DemoDataSeeder.SeedAsync(context, new FixedTimeProvider());
 
-        Assert.That(context.Contacts.Count(), Is.EqualTo(5));
+        var count = await context.Contacts.CountAsync();
+
+        Assert.That(count, Is.EqualTo(5));
     }
 }
 

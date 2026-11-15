@@ -1,13 +1,19 @@
 using ContactHub.Domain.Entities;
 using ContactHub.Domain.ValueObjects;
+using Microsoft.EntityFrameworkCore;
 
 namespace ContactHub.Infrastructure.Persistence;
 
 public static class DemoDataSeeder
 {
-    public static void Seed(AppDbContext context, TimeProvider timeProvider)
+    public static async Task SeedAsync(
+        AppDbContext context,
+        TimeProvider timeProvider,
+        CancellationToken cancellationToken = default)
     {
-        if (context.Contacts.Any())
+        var hasContacts = await context.Contacts.AnyAsync(cancellationToken);
+
+        if (hasContacts)
         {
             return;
         }
@@ -23,7 +29,7 @@ public static class DemoDataSeeder
         };
 
         context.Contacts.AddRange(contacts);
-        context.SaveChanges();
+        await context.SaveChangesAsync(cancellationToken);
     }
 
     private static Contact Build(

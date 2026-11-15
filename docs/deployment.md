@@ -9,7 +9,7 @@ The connection string is `Data Source=database/contacthub.db`. A
 relative path is resolved against the running app's folder (`AppContext.BaseDirectory`), not the
 working directory. Locally the file is
 `backend/ContactHub.Api/bin/Debug/net10.0/database/contacthub.db`. Startup creates the folder and runs
-`Database.Migrate()`, so the database is created on first run. Tests use `contacthub_test.db` in
+`Database.MigrateAsync()`, so the database is created on first run. Tests use `contacthub_test.db` in
 the test project's output folder, and the e2e run uses `contacthub_e2e.db`, which is deleted
 before each run. In Docker Compose the backend mounts the named volume `dbdata` on
 `/app/database`. Running `dotnet clean` or deleting `bin/` wipes local data.

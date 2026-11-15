@@ -87,7 +87,7 @@ A full checklist with line links and how to verify each item: [QA](docs/qa.md).
 
 | Requirement | Where |
 | --- | --- |
-| Data persisted | `backend/ContactHub.Infrastructure/DependencyInjection.cs` (SQLite path), `backend/ContactHub.Api/Program.cs` (`Database.Migrate()`), `compose.yml` (`dbdata` volume) |
+| Data persisted | `backend/ContactHub.Infrastructure/DependencyInjection.cs` (SQLite path), `backend/ContactHub.Api/Program.cs` (`Database.MigrateAsync()`), `compose.yml` (`dbdata` volume) |
 | EF Core | `backend/ContactHub.Infrastructure/Persistence/` (`AppDbContext.cs`, `Configurations/`, `Migrations/`) |
 | FluentValidation (models) | `backend/ContactHub.Application/Contacts/Commands/*/…Validator.cs`, `backend/ContactHub.Application/Behaviors/ValidationCommandHandlerDecorator.cs` |
 | FluentValidation (entities) | `backend/ContactHub.Domain/Entities/Contact.cs` (`ContactValidator`), `backend/ContactHub.Domain/ValueObjects/Address.cs` (`AddressValidator`) |

@@ -34,11 +34,11 @@
   `ContactHub.Infrastructure/Persistence/`. SQLite can't sort `DateTimeOffset`
   or `decimal`: use UTC `DateTime` and integer cents
 - Schema changes, from `backend/`: `dotnet ef migrations add <Change> --project
-  ContactHub.Infrastructure --startup-project ContactHub.Api` (first time `dotnet tool restore`). The app applies them at startup with `Database.Migrate()`
+  ContactHub.Infrastructure --startup-project ContactHub.Api` (first time `dotnet tool restore`). The app applies them at startup with `Database.MigrateAsync()`
 - Database file: `database/contacthub.db` inside the running app's folder, e.g.
   `backend/ContactHub.Api/bin/Debug/net10.0/database/contacthub.db`, created on first run. A relative
   `Data Source` is resolved against `AppContext.BaseDirectory`, never the working directory or
-  content root; startup creates the file's folder before `Database.Migrate()`. `*.db*` files are
+  content root; startup creates the file's folder before `Database.MigrateAsync()`. `*.db*` files are
   gitignored
 - Local `ConnectionStrings:Default`: `Data Source=database/contacthub.db`
 - Tests: `Data Source=database/contacthub_test.db` in `appsettings.Testing.json` (lands in the test

@@ -42,11 +42,11 @@ public class ProgramTests
     }
 
     [Test]
-    public async Task BuildApp_RegistersServicesAndMigratesDatabase()
+    public async Task BuildAppAsync_RegistersServicesAndMigratesDatabase()
     {
         ApiFactoryTestBase.ResetTestDatabase();
 
-        await using var app = Program.BuildApp(["--environment", "Testing"]);
+        await using var app = await Program.BuildAppAsync(["--environment", "Testing"]);
 
         Assert.That(app.Services.GetService<TimeProvider>(), Is.Not.Null);
         Assert.That(File.Exists(Path.Combine(AppContext.BaseDirectory, "database", "contacthub_test.db")), Is.True);

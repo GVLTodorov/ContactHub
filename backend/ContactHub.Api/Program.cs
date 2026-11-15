@@ -11,20 +11,20 @@ namespace ContactHub.Api;
 // WebApplication hosting with MVC controllers (no Minimal API endpoints).
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
-        var app = BuildApp(args);
+        var app = await BuildAppAsync(args);
 
-        app.Run();
+        await app.RunAsync();
     }
 
-    public static WebApplication BuildApp(string[] args)
+    public static async Task<WebApplication> BuildAppAsync(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
         AddServices(builder.Services);
 
         var app = builder.Build();
-        PrepareDatabase(app);
+        await PrepareDatabaseAsync(app);
         UsePipeline(app);
 
         return app;
@@ -44,15 +44,15 @@ public class Program
         services.AddSwaggerGen(o => o.SwaggerDoc("v1", new OpenApiInfo { Title = "ContactHub API", Version = "v1" }));
     }
 
-    private static void PrepareDatabase(WebApplication app)
+    private static async Task PrepareDatabaseAsync(WebApplication app)
     {
-        using var scope = app.Services.CreateScope();
+        await using var scope = app.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        db.Database.Migrate();
+        await db.Database.MigrateAsync();
 
         if (app.Configuration.GetValue<bool>("SeedDemoData"))
         {
-            DemoDataSeeder.Seed(db, scope.ServiceProvider.GetRequiredService<TimeProvider>());
+            await DemoDataSeeder.SeedAsync(db, scope.ServiceProvider.GetRequiredService<TimeProvider>());
         }
     }
 

@@ -45,7 +45,7 @@ contact shows them on its detail page.
 | What | Where |
 | --- | --- |
 | SQLite database file, path resolved against the app folder | [ContactHub.Infrastructure/DependencyInjection.cs:28-36](../backend/ContactHub.Infrastructure/DependencyInjection.cs#L28-L36) |
-| Migrations applied at startup (`Database.Migrate()`) | [ContactHub.Api/Program.cs:51](../backend/ContactHub.Api/Program.cs#L51) |
+| Migrations applied at startup (`Database.MigrateAsync()`) | [ContactHub.Api/Program.cs:51](../backend/ContactHub.Api/Program.cs#L51) |
 | Optional demo data (`SeedDemoData`) | [Program.cs:53](../backend/ContactHub.Api/Program.cs#L53), [DemoDataSeeder.cs](../backend/ContactHub.Infrastructure/Persistence/DemoDataSeeder.cs) |
 | Docker Compose named volume `dbdata` on `/app/database` | [compose.yml:12](../compose.yml#L12), [compose.yml:26](../compose.yml#L26) |
 | Image creates the writable database folder | [Dockerfile:10](../Dockerfile#L10) |

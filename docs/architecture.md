@@ -68,7 +68,7 @@ Namespaces follow the projects and folders (`ContactHub.Application.Contacts.Com
   write that loses a race (EF `DbUpdateConcurrencyException`), becomes `409 Conflict`.
 
 Hosting uses `WebApplication.CreateBuilder` with MVC controllers (no Minimal API endpoints).
-`Program.BuildApp` calls `AddApplication()`, which scans the Application assembly, registers every
+`Program.BuildAppAsync` calls `AddApplication()`, which scans the Application assembly, registers every
 handler, and wraps each command handler in `ValidationCommandHandlerDecorator`, and
 `AddInfrastructure()`, which registers the SQLite `AppDbContext` (connection string read from the
 built configuration) and exposes it as `IAppDbContext`. It then applies migrations and builds the
