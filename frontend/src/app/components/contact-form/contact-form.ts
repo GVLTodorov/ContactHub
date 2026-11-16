@@ -24,17 +24,27 @@ export interface ContactFormValue {
   version: number | null;
 }
 
+/**
+ * Formats a date as `yyyy-MM-dd` from its local parts. `toISOString()` would convert to UTC and
+ * could move the date a day back for users east of UTC.
+ */
 export function formatDate(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+/**
+ * The contact form shared by the new and edit pages. It checks the same rules as the API on the
+ * client, shows the server's field errors when a save is rejected, and emits trimmed values.
+ * Saving is left to the page.
+ */
 @Component({
   selector: 'app-contact-form',
   imports: [ReactiveFormsModule, ButtonModule, DatePickerModule, FieldsetModule, InputTextModule, MessageModule],
   templateUrl: './contact-form.html',
 })
 export class ContactForm {
+  /** True while the page's save request is running; disables the submit button. */
   readonly saving = input(false);
   /** Existing contact used to prefill the form. */
   readonly initial = input<Contact | null>(null);
@@ -107,6 +117,8 @@ export class ContactForm {
       // the API answer 409 if someone else really changed the contact in the meantime.
       if (c.id === this.filledFrom?.id && this.form.dirty) return;
       this.filledFrom = c;
+      // Build the date from its parts: `new Date('yyyy-MM-dd')` is read as UTC midnight, which
+      // shows the previous day for users west of UTC.
       const [y, m, d] = c.dateOfBirth.split('-').map(Number);
       this.form.reset({
         firstName: c.firstName,
@@ -117,6 +129,8 @@ export class ContactForm {
         address: { ...c.address },
       });
     });
+    // Attach each server error to its control as `server`, so it shows like a client error. It
+    // goes away by itself on the next edit, because Angular re-runs the validators then.
     effect(() => {
       const errors = this.serverErrors();
       for (const [key, messages] of Object.entries(errors)) {
@@ -129,7 +143,10 @@ export class ContactForm {
     });
   }
 
-  /** Messages to show under a field. */
+  /**
+   * Messages to show under a field. Kept hidden until the user has touched or changed the field,
+   * or tried to submit, so an untouched form does not open full of red.
+   */
   protected errorsFor(path: string): string[] {
     const control = this.form.get(path);
     if (!control?.errors) return [];
@@ -137,6 +154,7 @@ export class ContactForm {
     return this.messagesOf(control.errors);
   }
 
+  /** Built-in Angular errors get a fixed message; ours (and the server's) already carry their text. */
   private messagesOf(errors: ValidationErrors): string[] {
     return Object.entries(errors).map(([key, value]) => {
       if (key === 'required') return 'This field is required.';
@@ -145,6 +163,7 @@ export class ContactForm {
     });
   }
 
+  /** Emits the trimmed values if the form is valid; otherwise reveals every field's errors. */
   protected submit(): void {
     this.submitAttempted.set(true);
     if (this.form.invalid) {

@@ -26,6 +26,7 @@ export class Contacts {
   protected readonly contacts = this.store.selectSignal(contactsFeature.selectFilteredContacts);
   protected readonly allContacts = this.store.selectSignal(contactsFeature.selectAllContacts);
   protected readonly query = this.store.selectSignal(contactsFeature.selectQuery);
+  /** There are contacts, but none match the search; this differs from `isEmpty`, which means no contacts at all. */
   protected readonly noMatches = computed(
     () => this.query().trim() !== '' && this.allContacts().length > 0 && this.contacts().length === 0,
   );

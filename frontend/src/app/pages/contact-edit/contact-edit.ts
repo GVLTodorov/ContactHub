@@ -27,12 +27,14 @@ export class ContactEdit {
   protected readonly fieldErrors = this.store.selectSignal(contactsFeature.selectFieldErrors);
 
   constructor() {
+    // An effect, not a one-off dispatch: Angular reuses this component when only `:id` changes.
     effect(() => {
       const id = this.id();
       if (id) this.store.dispatch(EditContactPageActions.opened({ id }));
     });
   }
 
+  /** Sends the update with the version the form was filled from; `null` means the contact never loaded. */
   protected save({ input, version }: ContactFormValue): void {
     const id = this.id();
     if (id && version !== null) {

@@ -39,6 +39,7 @@ export const EditContactPageActions = createActionGroup({
   },
 });
 
+/** Results of the HTTP calls made by ContactsEffects; only the effects dispatch these. */
 export const ContactsApiActions = createActionGroup({
   source: 'Contacts API',
   events: {
@@ -47,6 +48,7 @@ export const ContactsApiActions = createActionGroup({
     'Create Success': props<{ contact: Contact }>(),
     'Create Failure': props<{ error: ApiError }>(),
     'Load One Success': props<{ contact: Contact }>(),
+    /** `notFound` is true for a 404, so the page can show "not found" instead of an error. */
     'Load One Failure': props<{ error: ApiError; notFound: boolean }>(),
     'Update Success': props<{ contact: Contact }>(),
     'Update Failure': props<{ error: ApiError }>(),

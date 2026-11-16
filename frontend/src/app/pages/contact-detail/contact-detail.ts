@@ -13,6 +13,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { ContactDetailPageActions } from '../../store/contacts/contacts.actions';
 import { contactsFeature } from '../../store/contacts/contacts.reducer';
 
+/** Age in whole years for a `yyyy-MM-dd` birth date; it goes up on the birthday itself. */
 export function ageOf(dateOfBirth: string, today = new Date()): number {
   const [y, m, d] = dateOfBirth.split('-').map(Number);
   let age = today.getFullYear() - y;
@@ -45,10 +46,12 @@ export class ContactDetail {
     const c = this.contact();
     return c ? ((c.firstName[0] ?? '') + (c.surname[0] ?? '')).toUpperCase() : '';
   });
+  /** The field just copied, so its button can show a check mark for two seconds. */
   protected readonly copied = signal<CopyField | null>(null);
   private copiedTimer?: ReturnType<typeof setTimeout>;
 
   constructor() {
+    // An effect, not a one-off dispatch: Angular reuses this component when only `:id` changes.
     effect(() => {
       const id = this.id();
       if (id) this.store.dispatch(ContactDetailPageActions.opened({ id }));
@@ -81,6 +84,7 @@ export class ContactDetail {
     try {
       await navigator.clipboard.writeText(text);
     } catch {
+      // The browser denied clipboard access (e.g. no permission or an insecure origin): show nothing.
       return;
     }
     clearTimeout(this.copiedTimer);

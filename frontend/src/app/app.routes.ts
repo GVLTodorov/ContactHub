@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 
+// Every page is lazy-loaded. `contacts/new` must stay above `contacts/:id`, or "new" would be
+// read as an id.
 export const routes: Routes = [
   { path: '', pathMatch: 'full', loadComponent: () => import('./pages/home/home').then((m) => m.Home) },
   {

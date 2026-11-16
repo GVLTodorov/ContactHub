@@ -18,6 +18,7 @@ export class Layout {
 
   private readonly api = inject(HealthApi);
 
+  /** Backend status for the toolbar tag; any error or an unexpected body counts as offline. */
   protected readonly status = computed<'loading' | 'online' | 'offline'>(() => {
     const h = this.api.health;
     if (h.isLoading()) return 'loading';

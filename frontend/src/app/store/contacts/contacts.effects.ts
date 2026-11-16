@@ -12,6 +12,12 @@ import {
   NewContactPageActions,
 } from './contacts.actions';
 
+/**
+ * Side effects for contacts: HTTP calls, toasts and navigation.
+ * Reads use `switchMap`, so a newer request cancels an older one still in flight.
+ * Writes use `exhaustMap`, so a second click while a save or delete is running is ignored
+ * instead of sending a duplicate request.
+ */
 @Injectable()
 export class ContactsEffects {
   private readonly actions$ = inject(Actions);
@@ -43,6 +49,7 @@ export class ContactsEffects {
     ),
   );
 
+  // The edit page loads the contact too, so the form starts from the latest version.
   readonly loadOne$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ContactDetailPageActions.opened, ContactDetailPageActions.retry, EditContactPageActions.opened),
@@ -85,6 +92,8 @@ export class ContactsEffects {
       ),
     { dispatch: false },
   );
+
+  // Update failures need no toast: the edit page shows them in its banner and form fields.
 
   readonly delete$ = createEffect(() =>
     this.actions$.pipe(

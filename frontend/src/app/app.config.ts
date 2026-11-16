@@ -17,15 +17,19 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideHttpClient(),
+    // The router state lives in the store so selectors can read route params such as `:id`.
     provideStore({ router: routerReducer }),
     provideRouterStore(),
     provideState(contactsFeature),
     provideEffects(ContactsEffects),
     ...environment.providers,
+    // App-wide, so toasts raised from effects show in the layout's <p-toast>.
     MessageService,
     providePrimeNG({
       theme: {
         preset: Aura,
+        // PrimeNG styles go in their own CSS layer below Tailwind's utilities (see styles.css),
+        // so a Tailwind class always wins over the component theme.
         options: { cssLayer: { name: 'primeng', order: 'theme, base, primeng' } },
       },
     }),
