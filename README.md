@@ -2,20 +2,20 @@
 
 | What | URL |
 | --- | --- |
-| App (list, search, create, edit, delete contacts) | <https://contacthub-web.onrender.com> |
+| App (list, search, create, edit, delete contacts) | <https://contacthub-h4or.onrender.com> |
 | Swagger UI (API docs, try it out) | <https://contacthub-h4or.onrender.com/swagger> |
 | API health check | <https://contacthub-h4or.onrender.com/api/health> |
 | Source | <https://github.com/GVLTodorov/ContactHub> |
 
-> The app is a Render static site; the API is a separate free web service that sleeps after about 15
-> minutes without traffic, so the first request can take up to a minute. Data resets to five demo contacts on every restart or deploy.
+> The app and the API run in one free Render web service that sleeps after about 15 minutes without
+> traffic, so the first request can take up to a minute. Data resets to five demo contacts on every restart or deploy.
 
 | Area | Technologies |
 | --- | --- |
 | Backend | ASP.NET Core Web API (.NET 10, controllers), EF Core + SQLite, FluentValidation, CQRS, rich domain model, Clean Architecture |
 | Frontend | Angular, ngrx (store, effects, entity, router-store), PrimeNG, Tailwind CSS v4 |
 | Tests | NUnit, NetArchTest, Vitest, Playwright |
-| DevOps | Docker Compose, GitHub Actions, Render |
+| DevOps | Docker (one image: API + nginx serving the UI), Docker Compose, GitHub Actions, Render |
 
 | Suite | Line coverage | Branch coverage |
 | --- | --- | --- |
@@ -54,7 +54,8 @@ Swagger opens at http://127.0.0.1:8080/swagger, the app at http://127.0.0.1:4700
 docker compose up --build
 ```
 
-App at http://127.0.0.1:4700, Swagger at http://127.0.0.1:8080/swagger.
+One container runs both, from the same image Render deploys. App at http://127.0.0.1:4700, Swagger
+at http://127.0.0.1:8080/swagger.
 
 ---
 

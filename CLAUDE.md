@@ -21,7 +21,8 @@
 - Framework: Angular (latest), TypeScript, Tailwind CSS (latest, v4+)
 - Commands: `cd frontend && npm run start | lint | test | build`; quiet tests
   `npm test -- --watch=false`
-- Dev server: `http://127.0.0.1:4700` (Windows reserves 4126–4225 here); in Docker `npx ng serve --host 0.0.0.0`
+- Dev server: `http://127.0.0.1:4700` (Windows reserves 4126–4225 here); in Docker nginx serves
+  the build on the same port (`docker/nginx.conf`)
 - VS Code launch: `frontend/node_modules/@angular/cli/bin/ng.js serve --host 127.0.0.1`
 - Build output: `frontend/dist/frontend/browser/`
 - Local dev values: `src/environments/`
@@ -44,7 +45,7 @@
 - Tests: `Data Source=database/contacthub_test.db` in `appsettings.Testing.json` (lands in the test
   project's output folder); one `[OneTimeSetUp]` deletes the file before the factory starts,
   startup recreates it
-- Compose: no `db` service; backend mounts a named volume on `/app/database`, same
+- Compose: no `db` service; one `app` service (API + nginx UI) mounts a named volume on `/app/database`, same
   `Data Source=database/contacthub.db`
 - Image: final stage creates `/app/database` owned by `app`
 - CI: no database service

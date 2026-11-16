@@ -11,7 +11,7 @@ working directory. Locally the file is
 `backend/ContactHub.Api/bin/Debug/net10.0/database/contacthub.db`. Startup creates the folder and runs
 `Database.MigrateAsync()`, so the database is created on first run. Tests use `contacthub_test.db` in
 the test project's output folder, and the e2e run uses `contacthub_e2e.db`, which is deleted
-before each run. In Docker Compose the backend mounts the named volume `dbdata` on
+before each run. In Docker Compose the `app` service mounts the named volume `dbdata` on
 `/app/database`. Running `dotnet clean` or deleting `bin/` wipes local data.
 
 ## CI pipeline
@@ -20,9 +20,8 @@ CI (`.github/workflows/ci.yml`) is one pipeline. On every push and pull request 
 (format, build, unit and integration tests with coverage), frontend (lint, tests with coverage,
 build) and e2e jobs. On `main`, once those pass, it then:
 
-- pushes the API image to GHCR as `:<version>` and `:latest`;
-- triggers the Render deploys through the `RENDER_DEPLOY_HOOK_URL` (API) and
-  `RENDER_FRONTEND_DEPLOY_HOOK_URL` (static site) secrets, each skipped with a notice if unset;
+- pushes the image (API and Angular UI) to GHCR as `:<version>` and `:latest`;
+- triggers the Render deploy through the `RENDER_DEPLOY_HOOK_URL` secret, skipped with a notice if unset;
 - builds the coverage badges (ReportGenerator) and the demo GIF (`e2e/ContactHub.Demo`, ffmpeg), and
   pushes them to the orphan `badges` branch from a single job.
 
@@ -41,32 +40,33 @@ Local runs without the variable are unchanged.
 
 ## Hosted on Render
 
-The frontend and the API are hosted separately. `render.yaml` is a Blueprint with two services,
-both with `autoDeploy: false`, so a failing commit never goes live:
+One image runs the whole app. The root `Dockerfile` builds the Angular app and publishes the API,
+and the final stage runs both side by side (`docker/entrypoint.sh`; if either exits, the container
+stops so it can restart):
 
-| Service | Type | URL | What it serves |
-| --- | --- | --- | --- |
-| `contacthub-web` | Static site | <https://contacthub-web.onrender.com> | The built Angular app (`frontend/dist/frontend/browser`) |
-| `contacthub` | Docker web service (free, Frankfurt) | <https://contacthub-h4or.onrender.com> | API and Swagger only, from the root `Dockerfile` on port 8080 |
+| Port | Process | What it serves |
+| --- | --- | --- |
+| 8080 | ASP.NET Core API | `/api`, `/swagger` |
+| 4700 | nginx (`docker/nginx.conf`) | The Angular build; forwards `/api` and `/swagger` to 8080, like the dev server's `proxy.conf.js` |
 
-The static site has two rewrite rules, in order:
+The browser only talks to 4700, so there is no CORS and the Angular app keeps calling the relative
+`/api`. nginx answers deep links such as `/contacts/123` with `index.html` and never caches
+`index.html`, so a new deploy is picked up at once. The ports match local development, so Compose
+and the URLs in the README are unchanged.
 
-1. `/api/*` → `https://contacthub-h4or.onrender.com/api/*`. The browser stays on one origin, so there is no CORS and the
-   Angular app keeps calling the relative `/api`, exactly as with the dev server proxy.
-2. `/*` → `/index.html`, so deep links such as `/contacts/123` load the Angular router.
-
-The API service sets `SeedDemoData=true`, `healthCheckPath: /api/health` and
-`ClientUrl=https://contacthub-web.onrender.com`, so Swagger's **Client** button opens the static site.
+`render.yaml` is a Blueprint with one free Docker web service, `contacthub` (Frankfurt), at
+<https://contacthub-h4or.onrender.com>, with `autoDeploy: false` so a failing commit never goes live.
+Render routes a single port, so it sets `PORT=4700`. It also sets `SeedDemoData=true`,
+`healthCheckPath: /api/health` (which checks nginx and the API together) and `ClientUrl=/`, so
+Swagger's **Client** button opens the app on the same origin.
 
 To set it up in another account:
 
 1. In Render choose New, Blueprint, and select this repository. Render reads `render.yaml` and
-   creates both services. If Render assigns different URLs, update the `/api/*` rewrite and
-   `ClientUrl` in `render.yaml`.
-2. For each service open Settings, Deploy Hook, and copy the URL.
-3. In GitHub, Settings, Secrets and variables, Actions, add `RENDER_DEPLOY_HOOK_URL` (API) and
-   `RENDER_FRONTEND_DEPLOY_HOOK_URL` (static site).
-4. Every green push to `main` now triggers both deploys. A missing secret skips its step.
+   creates the service.
+2. Open the service's Settings, Deploy Hook, and copy the URL.
+3. In GitHub, Settings, Secrets and variables, Actions, add it as `RENDER_DEPLOY_HOOK_URL`.
+4. Every green push to `main` now triggers the deploy. Without the secret the step is skipped.
 
 ## Tests, coverage and demo
 

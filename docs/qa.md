@@ -17,8 +17,8 @@ it. Links point to the exact files and lines. All items are **implemented**.
 | 10 | [Git repository](#10-git-repository) | ✅ |
 
 Quick check without installing anything: open the live app at
-<https://contacthub-web.onrender.com> (the first load can take up to a minute while the free-tier API
-wakes up) and the API docs at <https://contacthub-h4or.onrender.com/swagger>.
+<https://contacthub-h4or.onrender.com> (the first load can take up to a minute while the free-tier
+service wakes up) and the API docs at <https://contacthub-h4or.onrender.com/swagger>.
 
 ---
 
@@ -47,8 +47,8 @@ contact shows them on its detail page.
 | SQLite database file, path resolved against the app folder | [ContactHub.Infrastructure/DependencyInjection.cs:28-36](../backend/ContactHub.Infrastructure/DependencyInjection.cs#L28-L36) |
 | Migrations applied at startup (`Database.MigrateAsync()`) | [ContactHub.Api/Program.cs:51](../backend/ContactHub.Api/Program.cs#L51) |
 | Optional demo data (`SeedDemoData`) | [Program.cs:53](../backend/ContactHub.Api/Program.cs#L53), [DemoDataSeeder.cs](../backend/ContactHub.Infrastructure/Persistence/DemoDataSeeder.cs) |
-| Docker Compose named volume `dbdata` on `/app/database` | [compose.yml:12](../compose.yml#L12), [compose.yml:26](../compose.yml#L26) |
-| Image creates the writable database folder | [Dockerfile:10](../Dockerfile#L10) |
+| Docker Compose named volume `dbdata` on `/app/database` | [compose.yml:12](../compose.yml#L12), [compose.yml:15](../compose.yml#L15) |
+| Image creates the writable database folder | [Dockerfile:30](../Dockerfile#L30) |
 
 **How to check:** run `cd backend && dotnet run --project ContactHub.Api` and create a contact.
 Stop and restart the backend. The contact is still listed. The file is

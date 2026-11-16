@@ -9,9 +9,9 @@ DevOps engineer. Ports, commands and images are in `CLAUDE.md`'s Frontend and Da
 **Edit only `Dockerfile`, `compose.yml`, `.dockerignore`, `global.json`, `.nvmrc` and `.github/`.**
 App changes go in your report. Docker builds get a long timeout.
 
-- `compose.yml`: `db` from the Database section (SQLite has none); `backend` (waits for any `db`,
-  env `ConnectionStrings__Default`, `ASPNETCORE_ENVIRONMENT`); `frontend` (the Docker dev command).
-  Other values from `appsettings.Development.json`.
+- `compose.yml`: `db` from the Database section (SQLite has none); one `app` service from the
+  one image (waits for any `db`, env `ConnectionStrings__Default`, `ASPNETCORE_ENVIRONMENT`, ports
+  8080 and the frontend dev port). Other values from `appsettings.Development.json`.
 - `Dockerfile`: multi-stage. Backend: `mcr.microsoft.com/dotnet/sdk:<major.minor from global.json>`
   runs `dotnet publish -c Release`; final stage `mcr.microsoft.com/dotnet/aspnet:<same>`,
   `USER app`, port 8080. Frontend: Node from `.nvmrc`, `npm ci --loglevel=error`, non-root. One
@@ -42,10 +42,11 @@ The one time you edit `backend/` and `.vscode/`, only as below.
    default `/`; dev server URL in `appsettings.Development.json`. Test: `GET /swagger/index.html`
    contains `topbar-links` and `Client`.
 2. **One image, both apps.** `Dockerfile`: a stage builds `frontend/` (the Build output folder), a
-   stage publishes `backend/`, a final non-root stage runs the backend with the frontend build at
-   `/app/public`. When `StaticDir` is set the backend serves it (`UseDefaultFiles` +
-   `UseStaticFiles` on a `PhysicalFileProvider`, `index.html` fallback for GETs outside `/api` and
-   `/swagger`). Keep the build targets `compose.yml` uses.
+   stage publishes `backend/`, a final non-root stage installs nginx and runs the API (8080) and
+   nginx (frontend dev port) side by side via `docker/entrypoint.sh`. `docker/nginx.conf` (writable
+   paths in `/tmp`) serves the build, forwards `/api` and `/swagger` to 8080, `try_files` falls back
+   to `index.html`, `index.html` is `no-cache`. `render.yaml`: one Docker service, `PORT` = the
+   frontend port, `ClientUrl=/`.
 3. **Release.** `.github/workflows/release.yml`: on push to `main` and `workflow_dispatch`,
    `concurrency: release`, `permissions: contents: write, packages: write`. Job `test`: the `ci.yml`
    steps. Job `release` (needs `test`): checkout with `fetch-depth: 0`; next version = latest `v*`

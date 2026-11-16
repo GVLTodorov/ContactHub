@@ -1,3 +1,7 @@
+# Render Blueprint: the Docker image as one free web service.
+# Render routes a single port, so PORT is 4700, where nginx serves the Angular app and forwards
+# /api and /swagger to the API on 8080 inside the container. Swagger's Client button opens "/",
+# the same origin.
 services:
   - type: web
     name: contacthub
@@ -6,29 +10,13 @@ services:
     region: frankfurt
     dockerfilePath: ./Dockerfile
     dockerContext: .
+    # CI deploys after the tests pass (the deploy job in .github/workflows/ci.yml).
     autoDeploy: false
     healthCheckPath: /api/health
     envVars:
       - key: PORT
-        value: "8080"
+        value: "4700"
       - key: SeedDemoData
         value: "true"
       - key: ClientUrl
-        value: https://contacthub-web.onrender.com
-
-  - type: web
-    name: contacthub-web
-    runtime: static
-    buildCommand: cd frontend && npm ci && npm run build
-    staticPublishPath: frontend/dist/frontend/browser
-    autoDeploy: false
-    envVars:
-      - key: NODE_VERSION
-        value: "24"
-    routes:
-      - type: rewrite
-        source: /api/*
-        destination: https://contacthub-h4or.onrender.com/api/*
-      - type: rewrite
-        source: /*
-        destination: /index.html
+        value: /

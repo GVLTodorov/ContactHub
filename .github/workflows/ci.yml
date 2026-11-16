@@ -137,7 +137,6 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          target: backend
           push: true
           tags: |
             ${{ steps.v.outputs.image }}:${{ steps.v.outputs.version }}
@@ -152,26 +151,16 @@ jobs:
     needs: image
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Render API deploy
+      - name: Trigger Render deploy
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
           if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
-            echo "::notice::RENDER_DEPLOY_HOOK_URL is not set, skipping the Render API deploy."
+            echo "::notice::RENDER_DEPLOY_HOOK_URL is not set, skipping the Render deploy."
             exit 0
           fi
           curl --fail --silent --show-error --retry 3 -X POST "$RENDER_DEPLOY_HOOK_URL" > /dev/null
-          echo "Render API deploy triggered."
-      - name: Trigger Render frontend deploy
-        env:
-          RENDER_FRONTEND_DEPLOY_HOOK_URL: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}
-        run: |
-          if [ -z "$RENDER_FRONTEND_DEPLOY_HOOK_URL" ]; then
-            echo "::notice::RENDER_FRONTEND_DEPLOY_HOOK_URL is not set, skipping the Render frontend deploy."
-            exit 0
-          fi
-          curl --fail --silent --show-error --retry 3 -X POST "$RENDER_FRONTEND_DEPLOY_HOOK_URL" > /dev/null
-          echo "Render frontend deploy triggered."
+          echo "Render deploy triggered."
 
   coverage:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
