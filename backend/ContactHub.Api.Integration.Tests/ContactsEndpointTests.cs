@@ -45,6 +45,24 @@ public class ContactsEndpointTests : IntegrationTestBase
         Assert.That(fetched.GetProperty("address").GetProperty("street").GetString(), Is.EqualTo("Main St 1"));
     }
 
+    [TestCase("Robert'); DROP TABLE Contacts;--", "x' OR '1'='1")]
+    [TestCase("<script>alert(1)</script>", "<img src=x onerror=alert(1)>")]
+    public async Task Post_InjectionPayloads_AreStoredAsPlainText(string firstName, string surname)
+    {
+        var body = ValidBody(firstName, surname);
+        body["address"]!["city"] = "\"; DELETE FROM Contacts; --";
+        var created = await CreateContactAsync(body);
+        var id = created.GetProperty("id").GetGuid();
+
+        var fetched = await Client.GetFromJsonAsync<JsonElement>($"/api/contacts/{id}");
+        var list = await Client.GetFromJsonAsync<JsonElement>("/api/contacts");
+
+        Assert.That(fetched.GetProperty("firstName").GetString(), Is.EqualTo(firstName));
+        Assert.That(fetched.GetProperty("surname").GetString(), Is.EqualTo(surname));
+        Assert.That(fetched.GetProperty("address").GetProperty("city").GetString(), Is.EqualTo("\"; DELETE FROM Contacts; --"));
+        Assert.That(list.EnumerateArray().Select(c => c.GetProperty("id").GetGuid()), Does.Contain(id));
+    }
+
     [Test]
     public async Task Post_FieldsAtMaxLength_AreAccepted()
     {

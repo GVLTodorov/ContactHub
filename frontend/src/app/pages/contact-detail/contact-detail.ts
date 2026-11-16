@@ -10,6 +10,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
+import { escapeHtml } from '../../shared/escape-html';
 import { ContactDetailPageActions } from '../../store/contacts/contacts.actions';
 import { contactsFeature } from '../../store/contacts/contacts.reducer';
 
@@ -63,7 +64,7 @@ export class ContactDetail {
     if (!c) return;
     this.confirmation.confirm({
       header: 'Delete contact',
-      message: `Delete ${c.firstName} ${c.surname}?`,
+      message: `Delete ${escapeHtml(c.firstName)} ${escapeHtml(c.surname)}?`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Delete',
       rejectLabel: 'Cancel',

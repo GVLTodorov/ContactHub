@@ -112,6 +112,20 @@ describe('Contacts page', () => {
     expect(dispatch).toHaveBeenCalledWith(ContactListPageActions.deleteConfirmed({ id: '1' }));
   });
 
+  it('shows HTML in a name as text in the delete dialog, never as markup', async () => {
+    const evil = { ...contact, firstName: '<img src="x" id="injected">', surname: '<b>Lee</b>' } as Contact;
+    const { fixture, el } = setup([evil], [evil], '');
+    await fixture.whenStable();
+    el.querySelector<HTMLButtonElement>('button[aria-label^="Delete <img"]')!.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const message = document.querySelector('.p-confirmdialog-message');
+    expect(message).not.toBeNull();
+    expect(message!.querySelector('img, b')).toBeNull();
+    expect(message!.textContent).toBe('Delete <img src="x" id="injected"> <b>Lee</b>?');
+  });
+
   it('clears the search with the Clear button', async () => {
     const { fixture, store, el } = setup([contact], [contact], 'ann');
     const dispatch = vi.spyOn(store, 'dispatch');

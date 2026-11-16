@@ -10,6 +10,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { DatePipe } from '@angular/common';
 import { Contact } from '../../api/contacts-api';
+import { escapeHtml } from '../../shared/escape-html';
 import { ContactListPageActions } from '../../store/contacts/contacts.actions';
 import { contactsFeature } from '../../store/contacts/contacts.reducer';
 
@@ -42,7 +43,7 @@ export class Contacts {
   protected confirmDelete(c: Contact): void {
     this.confirmation.confirm({
       header: 'Delete contact',
-      message: `Delete ${c.firstName} ${c.surname}?`,
+      message: `Delete ${escapeHtml(c.firstName)} ${escapeHtml(c.surname)}?`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Delete',
       rejectLabel: 'Cancel',
